@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 fw-bold text-success mb-3">
+                <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+            </h1>
+            <p class="lead text-muted">Welcome back, {{ current_user.first_name }}! Here's your store overview.</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-gradient rounded-3 p-3">
+                                <i class="fas fa-dollar-sign fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Sales</h6>
+                            <h3 class="mb-0">GH₵{{ "%.2f"|format(total_sales) }}</h3>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up me-1"></i>+12% from last month
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-gradient rounded-3 p-3">
+                                <i class="fas fa-shopping-cart fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Orders</h6>
+                            <h3 class="mb-0">{{ total_orders }}</h3>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up me-1"></i>+8% from last month
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-gradient rounded-3 p-3">
+                                <i class="fas fa-box fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Products</h6>
+                            <h3 class="mb-0">{{ total_products }}</h3>
+                            <small class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ low_stock_products }} low stock
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-gradient rounded-3 p-3">
+                                <i class="fas fa-users fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Users</h6>
+                            <h3 class="mb-0">{{ total_users }}</h3>
+                            <small class="text-info">
+                                <i class="fas fa-plus me-1"></i>{{ new_users_today }} new today
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Orders -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Orders</h5>
+                    <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-primary btn-sm">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_orders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('admin.order_detail', id=order.id) }}" 
+                                           class="text-decoration-none">{{ order.order_number }}</a>
+                                    </td>
+                                    <td>{{ order.shipping_first_name }} {{ order.shipping_last_name }}</td>
+                                    <td>GH₵{{ "%.2f"|format(order.total_amount) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ order.get_status_color() }}">
+                                            {{ order.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.order_detail', id=order.id) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No orders yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Pending</span>
+                        <span class="badge bg-warning">{{ pending_orders }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Processing</span>
+                        <span class="badge bg-info">{{ processing_orders }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Shipped</span>
+                        <span class="badge bg-success">{{ shipped_orders }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.add_product') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Product
+                        </a>
+                        <a href="{{ url_for('admin.add_category') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-2"></i>Add Category
+                        </a>
+                        <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>View Orders
+                        </a>
+                        <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar me-2"></i>Analytics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    {% if low_stock_list %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alert
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>SKU</th>
+                                    <th>Current Stock</th>
+                                    <th>Min Level</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in low_stock_list %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ url_for('static', filename='uploads/' + product.get_main_image()) }}" 
+                                                 class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                                                 onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=40&h=40&fit=crop'">
+                                            <span>{{ product.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ product.sku or 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if product.stock_quantity == 0 else 'warning' }}">
+                                            {{ product.stock_quantity }}
+                                        </span>
+                                    </td>
+                                    <td>{{ product.min_stock_level }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.edit_product', id=product.id) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-edit"></i> Update Stock
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Admin Navigation -->
+<div class="position-fixed bottom-0 end-0 p-3">
+    <div class="dropdown">
+        <button class="btn btn-success rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 60px; height: 60px;">
+            <i class="fas fa-cog fa-lg"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('admin.products') }}">
+                <i class="fas fa-box me-2"></i>Products
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.categories') }}">
+                <i class="fas fa-tags me-2"></i>Categories
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.orders') }}">
+                <i class="fas fa-shopping-cart me-2"></i>Orders
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">
+                <i class="fas fa-users me-2"></i>Users
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.index') }}">
+                <i class="fas fa-store me-2"></i>View Store
+            </a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh dashboard stats every 30 seconds
+    setInterval(function() {
+        fetch('/admin/api/dashboard_stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update stats if needed
+                console.log('Dashboard stats updated:', data);
+            })
+            .catch(error => console.error('Error updating stats:', error));
+    }, 30000);
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+{% endblock %}

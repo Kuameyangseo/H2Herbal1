@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 fw-bold text-success mb-3">
+                <i class="fas fa-tags me-2"></i>Categories Management
+            </h1>
+            <p class="lead text-muted">Manage product categories</p>
+        </div>
+    </div>
+
+    <!-- Search and Add Category -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-8">
+                            <label for="search" class="form-label">Search Categories</label>
+                            {{ search_form.search(class="form-control", placeholder="Category name") }}
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Search</button>
+                                <a href="{{ url_for('admin.add_category') }}" class="btn btn-success">
+                                    <i class="fas fa-plus me-1"></i>Add Category
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>All Categories</h5>
+                    <span class="badge bg-primary">{{ categories.total }} Categories</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if categories.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Products</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories.items %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>{{ category.description[:100] }}{% if category.description|length > 100 %}...{% endif %}</td>
+                                    <td>
+                                        {% if category.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ category.products|length }}</td>
+                                    <td>{{ category.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.edit_category', id=category.id) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        {% if category.products %}
+                                            <button class="btn btn-outline-secondary btn-sm" disabled>
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        {% else %}
+                                            <a href="{{ url_for('admin.delete_category', id=category.id) }}" 
+                                               class="btn btn-outline-danger btn-sm"
+                                               onclick="return confirm('Are you sure you want to delete this category?')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if categories.pages > 1 %}
+                    <div class="card-footer">
+                        <nav aria-label="Categories pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if categories.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.categories', page=categories.prev_num, search=search_form.search.data) }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in categories.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != categories.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('admin.categories', page=page_num, search=search_form.search.data) }}">
+                                                    {{ page_num }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&hellip;</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if categories.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.categories', page=categories.next_num, search=search_form.search.data) }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No categories found</h5>
+                        <p class="text-muted">Try adjusting your search or <a href="{{ url_for('admin.add_category') }}">add a new category</a>.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

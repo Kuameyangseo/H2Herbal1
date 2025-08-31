@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Success Message -->
+            <div class="text-center mb-5">
+                <div class="success-icon mb-4">
+                    <i class="fas fa-check-circle fa-5x text-success"></i>
+                </div>
+                <h1 class="display-5 fw-bold text-success mb-3">Order Successful!</h1>
+                <p class="lead text-muted">Thank you for your purchase. Your order has been confirmed and is being processed.</p>
+            </div>
+
+            <!-- Order Details Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Order Information</h6>
+                            <p class="mb-1"><strong>Order Number:</strong> #{{ order.id }}</p>
+                            <p class="mb-1"><strong>Order Date:</strong> {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            <p class="mb-1"><strong>Status:</strong> 
+                                <span class="badge bg-{{ 'success' if order.status == 'completed' else 'warning' if order.status == 'pending' else 'info' }}">
+                                    {{ order.status.title() }}
+                                </span>
+                            </p>
+                            <p class="mb-0"><strong>Total Amount:</strong> <span class="text-success fw-bold">GH₵{{ "%.2f"|format(order.total_amount) }}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Customer Information</h6>
+                            <p class="mb-1"><strong>Name:</strong> {{ order.customer.first_name }} {{ order.customer.last_name }}</p>
+                            <p class="mb-1"><strong>Email:</strong> {{ order.customer.email }}</p>
+                            <p class="mb-0"><strong>Phone:</strong> {{ order.customer.phone or 'Not provided' }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Order Items -->
+                    <h6>Order Items</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ url_for('static', filename='uploads/' + item.product.get_main_image()) }}"
+                                                 class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                                                 onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=40&h=40&fit=crop'">
+                                            <div>
+                                                <div class="fw-medium">{{ item.product.name }}</div>
+                                                <small class="text-muted">{{ item.product.category.name }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>GH₵{{ "%.2f"|format(item.unit_price) }}</td>
+                                    <td>GH₵{{ "%.2f"|format(item.total_price) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3">Subtotal:</th>
+                                    <th>GH₵{{ "%.2f"|format(order.total_amount - order.shipping_cost) }}</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3">Shipping:</th>
+                                    <th>GH₵{{ "%.2f"|format(order.shipping_cost) }}</th>
+                                </tr>
+                                <tr class="table-success">
+                                    <th colspan="3">Total:</th>
+                                    <th>GH₵{{ "%.2f"|format(order.total_amount) }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-shipping-fast me-2"></i>Shipping Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Shipping Address</h6>
+                            <address>
+                                {{ order.shipping_address }}<br>
+                                {{ order.shipping_city }}{% if order.shipping_postal_code %}, {{ order.shipping_postal_code }}{% endif %}<br>
+                                {{ order.shipping_country }}
+                            </address>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Delivery Information</h6>
+                            <p class="mb-1"><strong>Estimated Delivery:</strong> 3-5 business days</p>
+                            <p class="mb-1"><strong>Shipping Method:</strong> Standard Delivery</p>
+                            <p class="mb-0"><strong>Tracking:</strong> You will receive tracking information via email</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>What's Next?</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                            <h6>Email Confirmation</h6>
+                            <p class="small text-muted">You'll receive an order confirmation email shortly with all the details.</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-box fa-2x text-warning mb-2"></i>
+                            <h6>Order Processing</h6>
+                            <p class="small text-muted">We'll prepare your order and send you tracking information.</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-truck fa-2x text-success mb-2"></i>
+                            <h6>Delivery</h6>
+                            <p class="small text-muted">Your order will be delivered to your specified address.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center">
+                <a href="{{ url_for('main.products') }}" class="btn btn-outline-primary btn-lg me-3">
+                    <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+                </a>
+                <a href="{{ url_for('auth.my_orders') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-list me-2"></i>View My Orders
+                </a>
+            </div>
+
+            <!-- Support Information -->
+            <div class="text-center mt-5">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <h6><i class="fas fa-headset me-2"></i>Need Help?</h6>
+                        <p class="mb-2">If you have any questions about your order, please don't hesitate to contact us.</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="mailto:support@h2herbal.com" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-envelope me-1"></i>Email Support
+                            </a>
+                            <a href="tel:+233123456789" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-phone me-1"></i>Call Us
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .success-icon {
+        animation: successPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes successPulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-scroll to top on page load
+    window.scrollTo(0, 0);
+
+    // Show success animation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add fade-in animation to cards
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+    });
+</script>
+{% endblock %}

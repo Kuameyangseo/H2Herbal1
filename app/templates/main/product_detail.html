@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.products') }}">Products</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.products', category=product.category_id) }}">{{ product.category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Product Images -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-images">
+                <!-- Main Image -->
+                <div class="main-image mb-3">
+                    {% set main_image = product.get_main_image() %}
+                    {% if main_image.startswith('http') %}
+                        <img src="{{ main_image }}"
+                             class="img-fluid rounded shadow-sm" alt="{{ product.name }}" id="mainImage"
+                             onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=600&h=600&fit=crop'"
+                             style="width: 100%; height: 400px; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' + main_image) }}"
+                             class="img-fluid rounded shadow-sm" alt="{{ product.name }}" id="mainImage"
+                             onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=600&h=600&fit=crop'"
+                             style="width: 100%; height: 400px; object-fit: cover;">
+                    {% endif %}
+                </div>
+
+                <!-- Thumbnail Images -->
+                {% if product.images %}
+                <div class="thumbnail-images">
+                    <div class="row g-2">
+                        {% for image in product.images %}
+                        <div class="col-3">
+                            {% if image.image_url.startswith('http') %}
+                                <img src="{{ image.image_url }}"
+                                     class="img-fluid rounded thumbnail-img" alt="{{ image.alt_text or product.name }}"
+                                     onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=150&h=150&fit=crop'"
+                                     style="height: 80px; object-fit: cover; cursor: pointer;"
+                                     onclick="changeMainImage(this.src)">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='uploads/' + image.image_url) }}"
+                                     class="img-fluid rounded thumbnail-img" alt="{{ image.alt_text or product.name }}"
+                                     onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=150&h=150&fit=crop'"
+                                     style="height: 80px; object-fit: cover; cursor: pointer;"
+                                     onclick="changeMainImage(this.src)">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="col-lg-6">
+            <div class="product-details">
+                <!-- Product Title -->
+                <h1 class="product-title mb-3">{{ product.name }}</h1>
+
+                <!-- Category -->
+                <div class="mb-2">
+                    <span class="badge bg-secondary">{{ product.category.name }}</span>
+                    {% if product.is_featured %}
+                        <span class="badge bg-warning text-dark ms-1">Featured</span>
+                    {% endif %}
+                </div>
+
+                <!-- Rating -->
+                <div class="product-rating mb-3">
+                    {% set rating = product.get_average_rating() %}
+                    {% for i in range(5) %}
+                        <i class="fas fa-star {{ 'text-warning' if i < rating else 'text-muted' }}"></i>
+                    {% endfor %}
+                    <span class="ms-2 text-muted">({{ product.reviews|length }} reviews)</span>
+                </div>
+
+                <!-- Price -->
+                <div class="product-price mb-4">
+                    {% if product.compare_price and product.compare_price > product.price %}
+                        <div class="original-price">
+                            <span class="text-muted text-decoration-line-through fs-5">GH₵{{ "%.2f"|format(product.compare_price) }}</span>
+                            <span class="badge bg-danger ms-2">-{{ product.get_discount_percentage() }}%</span>
+                        </div>
+                    {% endif %}
+                    <div class="current-price">
+                        <span class="price-tag fs-3">GH₵{{ "%.2f"|format(product.price) }}</span>
+                    </div>
+                </div>
+
+                <!-- Stock Status -->
+                <div class="stock-status mb-3">
+                    {% if product.is_in_stock() %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i>In Stock ({{ product.stock_quantity }} available)
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times-circle me-1"></i>Out of Stock
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Product Description -->
+                <div class="product-description mb-4">
+                    <h5>Description</h5>
+                    <p class="text-muted">{{ product.description }}</p>
+                </div>
+
+                <!-- Product Details -->
+                <div class="product-specs mb-4">
+                    <h6>Product Details</h6>
+                    <ul class="list-unstyled">
+                        {% if product.sku %}
+                            <li><strong>SKU:</strong> {{ product.sku }}</li>
+                        {% endif %}
+                        {% if product.weight %}
+                            <li><strong>Weight:</strong> {{ product.weight }}kg</li>
+                        {% endif %}
+                        {% if product.dimensions %}
+                            <li><strong>Dimensions:</strong> {{ product.dimensions }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Add to Cart Form -->
+                {% if product.is_in_stock() %}
+                <form method="POST" action="{{ url_for('main.add_to_cart', product_id=product.id) }}" class="add-to-cart-form">
+                    {{ add_to_cart_form.hidden_tag() }}
+                    
+                    <div class="row g-3 align-items-end mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Quantity</label>
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button" onclick="decreaseQuantity()">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                {{ add_to_cart_form.quantity(class="form-control text-center", id="quantity", min="1", max=product.stock_quantity) }}
+                                <button class="btn btn-outline-secondary" type="button" onclick="increaseQuantity()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            {% if current_user.is_authenticated %}
+                                {{ add_to_cart_form.submit(class="btn btn-primary btn-lg w-100") }}
+                            {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to Purchase
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This product is currently out of stock. Please check back later.
+                </div>
+                {% endif %}
+
+                <!-- Social Share -->
+                <div class="social-share">
+                    <h6>Share this product</h6>
+                    <div class="btn-group" role="group">
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-info btn-sm">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-success btn-sm">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Tabs -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab">
+                        Description
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">
+                        Reviews ({{ reviews|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" type="button" role="tab">
+                        Shipping Info
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-4" id="productTabsContent">
+                <!-- Description Tab -->
+                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                    <div class="card border-0">
+                        <div class="card-body">
+                            <h5>Product Description</h5>
+                            <p>{{ product.description }}</p>
+                            
+                            {% if product.meta_description %}
+                            <h6>Additional Information</h6>
+                            <p class="text-muted">{{ product.meta_description }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div class="tab-pane fade" id="reviews" role="tabpanel">
+                    <div class="card border-0">
+                        <div class="card-body">
+                            <!-- Add Review Form -->
+                            {% if current_user.is_authenticated %}
+                            <div class="add-review mb-4">
+                                <h5>Write a Review</h5>
+                                <form method="POST" action="{{ url_for('main.add_review', product_id=product.id) }}">
+                                    {{ review_form.hidden_tag() }}
+                                    
+                                    <div class="mb-3">
+                                        {{ review_form.rating.label(class="form-label") }}
+                                        {{ review_form.rating(class="form-select") }}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ review_form.title.label(class="form-label") }}
+                                        {{ review_form.title(class="form-control") }}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ review_form.comment.label(class="form-label") }}
+                                        {{ review_form.comment(class="form-control", rows="4") }}
+                                    </div>
+                                    
+                                    {{ review_form.submit(class="btn btn-primary") }}
+                                </form>
+                            </div>
+                            <hr>
+                            {% endif %}
+
+                            <!-- Reviews List -->
+                            {% if reviews %}
+                                {% for review in reviews %}
+                                <div class="review-item mb-4">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ review.user.first_name }} {{ review.user.last_name[0] }}.</h6>
+                                            <div class="rating mb-2">
+                                                {% for i in range(5) %}
+                                                    <i class="fas fa-star {{ 'text-warning' if i < review.rating else 'text-muted' }}"></i>
+                                                {% endfor %}
+                                            </div>
+                                            {% if review.title %}
+                                                <h6>{{ review.title }}</h6>
+                                            {% endif %}
+                                            {% if review.comment %}
+                                                <p class="text-muted">{{ review.comment }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted">{{ review.created_at.strftime('%B %d, %Y') }}</small>
+                                            {% if review.is_verified_purchase %}
+                                                <br><span class="badge bg-success">Verified Purchase</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if not loop.last %}<hr>{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No reviews yet. Be the first to review this product!</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Tab -->
+                <div class="tab-pane fade" id="shipping" role="tabpanel">
+                    <div class="card border-0">
+                        <div class="card-body">
+                            <h5>Shipping Information</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-truck me-2"></i>Delivery Options</h6>
+                                    <ul class="list-unstyled">
+                                        <li>• Standard Delivery: 3-5 business days</li>
+                                        <li>• Express Delivery: 1-2 business days</li>
+                                        <li>• Same Day Delivery: Available in Accra</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-shield-alt me-2"></i>Return Policy</h6>
+                                    <ul class="list-unstyled">
+                                        <li>• 30-day return policy</li>
+                                        <li>• Free returns on defective items</li>
+                                        <li>• Original packaging required</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="text-success mb-4">Related Products</h3>
+            <div class="row g-4">
+                {% for related_product in related_products %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card product-card h-100 border-0 shadow-sm">
+                        <div class="position-relative">
+                            {% set related_image = related_product.get_main_image() %}
+                            {% if related_image.startswith('http') %}
+                                <img src="{{ related_image }}"
+                                     class="card-img-top product-image" alt="{{ related_product.name }}"
+                                     onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=300&h=250&fit=crop'"
+                                     style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='uploads/' + related_image) }}"
+                                     class="card-img-top product-image" alt="{{ related_product.name }}"
+                                     onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=300&h=250&fit=crop'"
+                                     style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                            {% if related_product.get_discount_percentage() > 0 %}
+                                <span class="discount-badge">-{{ related_product.get_discount_percentage() }}%</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body p-3">
+                            <h6 class="card-title mb-2">
+                                <a href="{{ url_for('main.product_detail', id=related_product.id) }}" 
+                                   class="text-decoration-none text-dark">{{ related_product.name }}</a>
+                            </h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="price-tag">GH₵{{ "%.2f"|format(related_product.price) }}</span>
+                                <a href="{{ url_for('main.product_detail', id=related_product.id) }}" 
+                                   class="btn btn-outline-primary btn-sm">View</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .thumbnail-img:hover {
+        opacity: 0.8;
+        transform: scale(1.05);
+        transition: all 0.3s ease;
+    }
+    
+    .review-item {
+        border-left: 3px solid var(--primary-green);
+        padding-left: 1rem;
+    }
+    
+    .nav-tabs .nav-link {
+        color: var(--primary-green);
+        border-color: transparent;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: var(--white);
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+    }
+    
+    .social-share .btn {
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function changeMainImage(src) {
+        document.getElementById('mainImage').src = src;
+    }
+    
+    function increaseQuantity() {
+        const input = document.getElementById('quantity');
+        const currentValue = parseInt(input.value);
+        const maxValue = parseInt(input.max);
+        
+        if (currentValue < maxValue) {
+            input.value = currentValue + 1;
+        }
+    }
+    
+    function decreaseQuantity() {
+        const input = document.getElementById('quantity');
+        const currentValue = parseInt(input.value);
+        
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+        }
+    }
+    
+    // Form submission with loading state
+    document.querySelector('.add-to-cart-form').addEventListener('submit', function() {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<span class="loading"></span> Adding to Cart...';
+            submitBtn.disabled = true;
+        }
+    });
+</script>
+{% endblock %}

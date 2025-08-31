@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Choose Two-Factor Authentication Method
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Two-factor authentication adds an extra layer of security to your account. 
+                        Choose your preferred method below.
+                    </p>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'success' if category == 'success' else 'warning' if category == 'warning' else 'danger' }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 method-card" data-method="sms">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-sms fa-3x text-success mb-3"></i>
+                                        <h6>SMS Verification</h6>
+                                        <p class="text-muted small">
+                                            Receive verification codes via SMS to your phone number.
+                                        </p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="method" value="sms" id="sms">
+                                            <label class="form-check-label" for="sms">
+                                                Use SMS
+                                            </label>
+                                        </div>
+                                        {% if not current_user.phone_verified %}
+                                            <small class="text-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                Phone verification required
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card h-100 method-card" data-method="totp">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-mobile-alt fa-3x text-primary mb-3"></i>
+                                        <h6>Authenticator App</h6>
+                                        <p class="text-muted small">
+                                            Use Google Authenticator, Authy, or similar apps to generate codes.
+                                        </p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="method" value="totp" id="totp" checked>
+                                            <label class="form-check-label" for="totp">
+                                                Use Authenticator App
+                                            </label>
+                                        </div>
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle"></i>
+                                            Recommended
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-info btn-lg") }}
+                            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Make cards clickable
+    document.querySelectorAll('.method-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const method = this.dataset.method;
+            const radio = document.getElementById(method);
+            radio.checked = true;
+            
+            // Update visual selection
+            document.querySelectorAll('.method-card').forEach(c => c.classList.remove('border-primary'));
+            this.classList.add('border-primary');
+        });
+    });
+    
+    // Set initial selection
+    document.querySelector('.method-card[data-method="totp"]').classList.add('border-primary');
+</script>
+
+<style>
+.method-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.method-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.method-card.border-primary {
+    border-color: #0d6efd !important;
+}
+</style>
+{% endblock %}

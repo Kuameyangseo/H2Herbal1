@@ -1,0 +1,49 @@
+Dear {{ user.first_name }} {{ user.last_name }},
+
+Thank you for your order with H2HERBAL!
+
+ORDER DETAILS
+=============
+Order Number: {{ order.order_number }}
+Order Date: {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+Payment Status: {{ order.payment_status.title() }}
+
+SHIPPING ADDRESS
+================
+{{ order.shipping_first_name }} {{ order.shipping_last_name }}
+{{ order.shipping_address }}
+{{ order.shipping_city }}, {{ order.shipping_postal_code }}
+{{ order.shipping_country }}
+Phone: {{ order.shipping_phone }}
+
+ORDER ITEMS
+===========
+{% for item in order.items %}
+{{ item.product_name }} (SKU: {{ item.product_sku }})
+Quantity: {{ item.quantity }}
+Unit Price: GHS {{ "%.2f"|format(item.unit_price) }}
+Total: GHS {{ "%.2f"|format(item.total_price) }}
+
+{% endfor %}
+
+ORDER SUMMARY
+=============
+Subtotal: GHS {{ "%.2f"|format(order.subtotal) }}
+{% if order.tax_amount > 0 %}Tax: GHS {{ "%.2f"|format(order.tax_amount) }}{% endif %}
+{% if order.shipping_cost > 0 %}Shipping: GHS {{ "%.2f"|format(order.shipping_cost) }}{% endif %}
+{% if order.discount_amount > 0 %}Discount: -GHS {{ "%.2f"|format(order.discount_amount) }}{% endif %}
+TOTAL: GHS {{ "%.2f"|format(order.total_amount) }}
+
+We will send you another email when your order ships.
+
+If you have any questions about your order, please contact us at support@h2herbal.com
+
+Thank you for choosing H2HERBAL for your natural health needs!
+
+Best regards,
+The H2HERBAL Team
+
+---
+H2HERBAL - Natural Health & Wellness
+Website: https://h2herbal.com
+Email: support@h2herbal.com

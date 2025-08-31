@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 fw-bold text-success mb-3">
+                <i class="fas fa-envelope me-2"></i>Newsletter Management
+            </h1>
+            <p class="lead text-muted">Manage newsletter subscribers</p>
+        </div>
+    </div>
+
+    <!-- Newsletter Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-4 text-primary mb-2">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h5 class="card-title">Total Subscribers</h5>
+                    <h3 class="text-success">{{ subscribers.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-4 text-info mb-2">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="card-title">Growth Rate</h5>
+                    <h3 class="text-success">+12%</h3>
+                    <small class="text-muted">This month</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="display-4 text-warning mb-2">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <h5 class="card-title">Campaigns Sent</h5>
+                    <h3 class="text-success">24</h3>
+                    <small class="text-muted">This year</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Newsletter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-paper-plane me-2"></i>Send Newsletter</h5>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="subject" placeholder="Enter newsletter subject">
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content</label>
+                            <textarea class="form-control" id="content" rows="6" placeholder="Write your newsletter content here..."></textarea>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-1"></i>Send to {{ subscribers.total }} Subscribers
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscribers List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Newsletter Subscribers</h5>
+                    <span class="badge bg-primary">{{ subscribers.total }} Subscribers</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if subscribers.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Subscription Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subscriber in subscribers.items %}
+                                <tr>
+                                    <td>{{ subscriber.email }}</td>
+                                    <td>{{ subscriber.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if subscriber.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" disabled>
+                                                <i class="fas fa-envelope"></i> Message
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+                                                <i class="fas fa-trash"></i> Remove
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if subscribers.pages > 1 %}
+                    <div class="card-footer">
+                        <nav aria-label="Subscribers pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if subscribers.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.newsletter', page=subscribers.prev_num) }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in subscribers.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != subscribers.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('admin.newsletter', page=page_num) }}">
+                                                    {{ page_num }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&hellip;</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if subscribers.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.newsletter', page=subscribers.next_num) }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-envelope fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No subscribers found</h5>
+                        <p class="text-muted">There are no newsletter subscribers yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

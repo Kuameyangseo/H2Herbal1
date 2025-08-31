@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-center py-4">
+                    <h3 class="mb-0"><i class="fas fa-key me-2"></i>Backup Codes</h3>
+                    <p class="text-muted mb-0">Two-factor authentication enabled successfully!</p>
+                </div>
+                <div class="card-body p-5">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Success!</strong> Two-factor authentication has been enabled for your account.
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Important:</strong> Save these backup codes in a safe place. You can use them to access your account if you lose your phone or authenticator app.
+                    </div>
+                    
+                    <div class="backup-codes-container mb-4">
+                        <h5 class="mb-3">Your Backup Codes:</h5>
+                        <div class="row">
+                            {% for code in backup_codes %}
+                            <div class="col-md-6 mb-2">
+                                <div class="backup-code">
+                                    <code>{{ code }}</code>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Remember:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Each backup code can only be used once</li>
+                            <li>Store them in a secure location (password manager, safe, etc.)</li>
+                            <li>Don't share these codes with anyone</li>
+                            <li>You can view remaining codes anytime from your profile</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2"
+                         data-backup-codes="{{ backup_codes|tojson|e }}"
+                         data-user-email="{{ current_user.email|e }}">
+                        <button class="btn btn-outline-primary" onclick="downloadBackupCodes()">
+                            <i class="fas fa-download me-2"></i>Download Backup Codes
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="printBackupCodes()">
+                            <i class="fas fa-print me-2"></i>Print Backup Codes
+                        </button>
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-success btn-lg">
+                            <i class="fas fa-check me-2"></i>I've Saved My Backup Codes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .backup-codes-container {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .backup-code {
+        background: white;
+        padding: 12px;
+        border-radius: 6px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        margin-bottom: 8px;
+    }
+    
+    .backup-code code {
+        font-size: 16px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        color: #495057;
+        background: none;
+        padding: 0;
+    }
+    
+    @media print {
+        .btn, .alert-success, .alert-info {
+            display: none !important;
+        }
+        
+        .backup-codes-container {
+            border: 2px solid #000;
+            background: white !important;
+        }
+        
+        .backup-code {
+            border: 1px solid #000;
+            background: white !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function downloadBackupCodes() {
+        // Get data from HTML data attributes
+        const container = document.querySelector('[data-backup-codes]');
+        const codes = JSON.parse(container.dataset.backupCodes);
+        const userEmail = container.dataset.userEmail;
+        
+        const content = `H2HERBAL - Two-Factor Authentication Backup Codes
+Generated: ${new Date().toLocaleString()}
+
+IMPORTANT: Keep these codes safe and secure!
+Each code can only be used once.
+
+Backup Codes:
+${codes.map((code, index) => `${index + 1}. ${code}`).join('\n')}
+
+Instructions:
+- Use these codes if you lose access to your authenticator app
+- Enter any unused code when prompted for your 2FA code
+- Store these codes in a secure location
+- Do not share these codes with anyone
+
+Account: ${userEmail}
+`;
+        
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'h2herbal-backup-codes.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+    
+    function printBackupCodes() {
+        window.print();
+    }
+</script>
+{% endblock %}

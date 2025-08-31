@@ -1,0 +1,67 @@
+Dear {{ user.first_name }} {{ user.last_name }},
+
+Your H2HERBAL order has been updated!
+
+ORDER DETAILS
+=============
+Order Number: {{ order.order_number }}
+Order Date: {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+Current Status: {{ order.status.title() }}
+Payment Status: {{ order.payment_status.title() }}
+
+{% if order.status == 'shipped' %}
+SHIPPING INFORMATION
+===================
+Your order has been shipped and is on its way to you!
+{% if order.shipped_at %}Shipped on: {{ order.shipped_at.strftime('%B %d, %Y at %I:%M %p') }}{% endif %}
+
+You should receive your package within 3-5 business days.
+{% elif order.status == 'delivered' %}
+DELIVERY CONFIRMATION
+====================
+Your order has been delivered!
+{% if order.delivered_at %}Delivered on: {{ order.delivered_at.strftime('%B %d, %Y at %I:%M %p') }}{% endif %}
+
+We hope you enjoy your H2HERBAL products!
+{% elif order.status == 'processing' %}
+ORDER PROCESSING
+===============
+Your order is currently being prepared for shipment.
+We'll send you another update when it ships.
+{% elif order.status == 'cancelled' %}
+ORDER CANCELLED
+==============
+Your order has been cancelled as requested.
+If you have any questions, please contact our support team.
+{% endif %}
+
+SHIPPING ADDRESS
+================
+{{ order.shipping_first_name }} {{ order.shipping_last_name }}
+{{ order.shipping_address }}
+{{ order.shipping_city }}, {{ order.shipping_postal_code }}
+{{ order.shipping_country }}
+
+ORDER ITEMS
+===========
+{% for item in order.items %}
+{{ item.product_name }} (SKU: {{ item.product_sku }})
+Quantity: {{ item.quantity }}
+Unit Price: GHS {{ "%.2f"|format(item.unit_price) }}
+Total: GHS {{ "%.2f"|format(item.total_price) }}
+
+{% endfor %}
+
+ORDER TOTAL: GHS {{ "%.2f"|format(order.total_amount) }}
+
+If you have any questions about your order, please contact us at support@h2herbal.com
+
+Thank you for choosing H2HERBAL!
+
+Best regards,
+The H2HERBAL Team
+
+---
+H2HERBAL - Natural Health & Wellness
+Website: https://h2herbal.com
+Email: support@h2herbal.com

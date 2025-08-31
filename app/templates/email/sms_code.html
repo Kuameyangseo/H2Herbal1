@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SMS Verification Code</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2d5016;">H2HERBAL</h1>
+        
+        <h2>SMS Verification Code</h2>
+        
+        <p>Dear {{ user.first_name }},</p>
+        
+        <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #2d5016; margin: 20px 0; text-align: center;">
+            <p><strong>Your verification code is:</strong></p>
+            <h1 style="font-size: 36px; color: #2d5016; margin: 10px 0; letter-spacing: 5px;">{{ code }}</h1>
+            <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes</p>
+        </div>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border: 1px solid #ffeaa7; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0; color: #856404;">
+                <strong>Note:</strong> We attempted to send this code via SMS to your phone number 
+                <strong>{{ user.phone }}</strong>, but delivered it via email as a backup method.
+            </p>
+        </div>
+        
+        <p>Enter this code in the verification form to complete your phone number verification.</p>
+        
+        <p>If you didn't request this verification code, please ignore this email or contact our support team.</p>
+        
+        <p>Best regards,<br>
+        The H2HERBAL Team</p>
+        
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <p style="font-size: 12px; color: #666;">
+            This email was sent to {{ user.email }}. This verification code is valid for 10 minutes only.
+        </p>
+    </div>
+</body>
+</html>

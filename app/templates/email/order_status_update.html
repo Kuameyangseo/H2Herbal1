@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Update - {{ order.order_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #28a745;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #28a745;
+            margin: 0;
+            font-size: 28px;
+        }
+        .header p {
+            color: #666;
+            margin: 10px 0 0 0;
+            font-size: 16px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #28a745;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .status-update {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+            margin-bottom: 20px;
+        }
+        .status-update h3 {
+            margin-top: 0;
+            color: #28a745;
+        }
+        .order-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .order-info p {
+            margin: 5px 0;
+        }
+        .order-info strong {
+            color: #28a745;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .items-table th,
+        .items-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .items-table th {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .contact-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-shipped {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        .status-delivered {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-processing {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-confirmed {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .highlight-box {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>H2HERBAL</h1>
+            <p>Natural Health & Wellness</p>
+        </div>
+
+        <div class="section">
+            <h2>Order Status Update</h2>
+            <p>Dear {{ user.first_name }} {{ user.last_name }},</p>
+            <p>We have an update on your H2HERBAL order!</p>
+        </div>
+
+        <div class="status-update">
+            <h3>Current Status: 
+                <span class="status-badge status-{{ order.status }}">
+                    {{ order.status.title() }}
+                </span>
+            </h3>
+            
+            {% if order.status == 'shipped' %}
+            <div class="highlight-box">
+                <h4>📦 Your Order Has Shipped!</h4>
+                <p>Great news! Your order is on its way to you.</p>
+                {% if order.shipped_at %}
+                <p><strong>Shipped on:</strong> {{ order.shipped_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                {% endif %}
+                <p><strong>Expected delivery:</strong> 3-5 business days</p>
+            </div>
+            {% elif order.status == 'delivered' %}
+            <div class="highlight-box">
+                <h4>✅ Order Delivered!</h4>
+                <p>Your order has been successfully delivered!</p>
+                {% if order.delivered_at %}
+                <p><strong>Delivered on:</strong> {{ order.delivered_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                {% endif %}
+                <p>We hope you enjoy your H2HERBAL products!</p>
+            </div>
+            {% elif order.status == 'processing' %}
+            <div class="highlight-box">
+                <h4>⚙️ Order Being Processed</h4>
+                <p>Your order is currently being prepared for shipment.</p>
+                <p>We'll send you another update when it ships with tracking information.</p>
+            </div>
+            {% elif order.status == 'cancelled' %}
+            <div class="highlight-box">
+                <h4>❌ Order Cancelled</h4>
+                <p>Your order has been cancelled as requested.</p>
+                <p>If you have any questions about this cancellation, please contact our support team.</p>
+            </div>
+            {% elif order.status == 'confirmed' %}
+            <div class="highlight-box">
+                <h4>✓ Order Confirmed</h4>
+                <p>Your order has been confirmed and will be processed soon.</p>
+                <p>We'll keep you updated on the progress.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>Order Details</h2>
+            <div class="order-info">
+                <p><strong>Order Number:</strong> {{ order.order_number }}</p>
+                <p><strong>Order Date:</strong> {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                <p><strong>Payment Status:</strong> {{ order.payment_status.title() }}</p>
+                <p><strong>Total Amount:</strong> GHS {{ "%.2f"|format(order.total_amount) }}</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Shipping Address</h2>
+            <div class="order-info">
+                <p><strong>{{ order.shipping_first_name }} {{ order.shipping_last_name }}</strong></p>
+                <p>{{ order.shipping_address }}</p>
+                <p>{{ order.shipping_city }}{% if order.shipping_postal_code %}, {{ order.shipping_postal_code }}{% endif %}</p>
+                <p>{{ order.shipping_country }}</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Order Items</h2>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.product_sku or 'N/A' }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>GHS {{ "%.2f"|format(item.unit_price) }}</td>
+                        <td>GHS {{ "%.2f"|format(item.total_price) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p><strong>Thank you for choosing H2HERBAL!</strong></p>
+            <p>If you have any questions about your order, please don't hesitate to contact us.</p>
+            
+            <div class="contact-info">
+                <p><strong>Contact Information</strong></p>
+                <p>Email: support@h2herbal.com</p>
+                <p>Website: https://h2herbal.com</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

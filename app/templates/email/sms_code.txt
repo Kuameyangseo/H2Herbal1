@@ -1,0 +1,16 @@
+Dear {{ user.first_name }},
+
+Your H2HERBAL SMS verification code is: {{ code }}
+
+This code will expire in 10 minutes.
+
+Note: We attempted to send this code via SMS to your phone number {{ user.phone }}, but delivered it via email as a backup method.
+
+Enter this code in the verification form to complete your phone number verification.
+
+If you didn't request this verification code, please ignore this email or contact our support team.
+
+Best regards,
+The H2HERBAL Team
+
+This verification code is valid for 10 minutes only.

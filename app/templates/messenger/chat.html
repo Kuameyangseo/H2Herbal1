@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Chat Support{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4">
+        <i class="fas fa-comments me-2"></i>
+        Chat Support
+      </h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mb-4">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-comment me-2"></i>
+            <span id="chat-title">Chat with Support</span>
+          </h5>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="end-chat-btn">
+              <i class="fas fa-times me-1"></i>
+              End Chat
+            </button>
+          </div>
+        </div>
+        <div class="card-body d-flex flex-column p-0">
+          <!-- Messages Container -->
+          <div class="flex-grow-1 overflow-auto p-3" id="customer-messages-container" style="height: 400px;">
+            <div class="text-center text-muted d-flex align-items-center justify-content-center h-100" id="no-chat-history">
+              <div>
+                <i class="fas fa-comment-alt fa-3x mb-3"></i>
+                <p>Starting chat session...</p>
+              </div>
+            </div>
+            <!-- Messages will be dynamically inserted here -->
+          </div>
+
+          <!-- Typing Indicator -->
+          <div class="px-3 py-2 border-top d-none" id="agent-typing-indicator">
+            <div class="d-flex align-items-center">
+              <div class="typing-dots me-2">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
+              <span class="text-muted">Support is typing...</span>
+            </div>
+          </div>
+
+          <!-- Message Input Area -->
+          <div class="border-top p-3">
+            <!-- Canned Responses -->
+            <div class="mb-2">
+              <select class="form-select form-select-sm" id="customer-canned-responses-select">
+                <option value="">Quick actions...</option>
+                <!-- Options will be populated dynamically -->
+              </select>
+            </div>
+
+            <!-- Attachment Preview -->
+            <div class="mb-2 d-none" id="customer-attachment-preview">
+              <div class="d-flex align-items-center bg-light p-2 rounded">
+                <i class="fas fa-file me-2"></i>
+                <span class="flex-grow-1" id="customer-attachment-filename"></span>
+                <button class="btn btn-sm btn-outline-danger" id="customer-remove-attachment-btn">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Message Form -->
+            <form id="customer-message-form">
+              <div class="input-group">
+                <button class="btn btn-outline-secondary" type="button" id="customer-attachment-btn" title="Attach file">
+                  <i class="fas fa-paperclip"></i>
+                </button>
+                <textarea class="form-control" id="customer-message-input" rows="2" 
+                          placeholder="Type your message..."></textarea>
+                <button class="btn btn-success" type="submit" id="customer-send-btn">
+                  <i class="fas fa-paper-plane"></i>
+                  <span class="d-none d-md-inline ms-1">Send</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Chat Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <h6 class="text-muted">Status</h6>
+            <p id="chat-status" class="mb-0">Connecting...</p>
+          </div>
+          
+          <div class="mb-3">
+            <h6 class="text-muted">Agent</h6>
+            <p id="agent-name" class="mb-0">-</p>
+          </div>
+          
+          <div class="mb-3">
+            <h6 class="text-muted">Subject</h6>
+            <p id="chat-subject" class="mb-0">General Inquiry</p>
+          </div>
+          
+          <div class="mb-3">
+            <h6 class="text-muted">Started</h6>
+            <p id="chat-started" class="mb-0">-</p>
+          </div>
+          
+          <div class="mt-4">
+            <h6 class="text-muted">Quick Actions</h6>
+            <div class="d-grid gap-2">
+              <button class="btn btn-outline-primary btn-sm" id="faq-btn">
+                <i class="fas fa-question-circle me-1"></i>
+                FAQ
+              </button>
+              <button class="btn btn-outline-primary btn-sm" id="order-status-btn">
+                <i class="fas fa-truck me-1"></i>
+                Order Status
+              </button>
+              <button class="btn btn-outline-primary btn-sm" id="return-policy-btn">
+                <i class="fas fa-undo me-1"></i>
+                Return Policy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden iframe for file uploads -->
+<iframe name="customer-upload-frame" id="customer-upload-frame" style="display:none;"></iframe>
+
+{% endblock %}
+
+{% block scripts %}
+<script defer async src="{{ url_for('static', filename='js/customer_chat_widget.js') }}"></script>
+{% endblock %}

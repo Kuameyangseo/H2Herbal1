@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>My Orders</h3>
+                            <p class="text-muted mb-0">Track and manage your orders</p>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('main.products') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if orders.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Payment</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders.items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ order.order_number }}</strong>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ order.created_at.strftime('%b %d, %Y') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {{ order.get_total_items() }} item{{ 's' if order.get_total_items() != 1 else '' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>${{ "%.2f"|format(order.total_amount) }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ order.get_status_color() }}">
+                                                {{ order.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if order.payment_status == 'paid' %}success{% elif order.payment_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                                {{ order.payment_status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        data-bs-toggle="collapse" 
+                                                        data-bs-target="#order-{{ order.id }}"
+                                                        aria-expanded="false">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="collapse" id="order-{{ order.id }}">
+                                        <td colspan="7">
+                                            <div class="p-3 bg-light">
+                                                <h6><i class="fas fa-box me-2"></i>Order Items:</h6>
+                                                <div class="row">
+                                                    {% for item in order.items %}
+                                                    <div class="col-md-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-grow-1">
+                                                                <strong>{{ item.product_name }}</strong>
+                                                                <br>
+                                                                <small class="text-muted">
+                                                                    Qty: {{ item.quantity }} × ${{ "%.2f"|format(item.unit_price) }}
+                                                                </small>
+                                                            </div>
+                                                            <div class="text-end">
+                                                                <strong>${{ "%.2f"|format(item.total_price) }}</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                                
+                                                {% if order.shipping_address %}
+                                                <hr>
+                                                <h6><i class="fas fa-truck me-2"></i>Shipping Address:</h6>
+                                                <p class="mb-0">
+                                                    {{ order.shipping_first_name }} {{ order.shipping_last_name }}<br>
+                                                    {{ order.shipping_address }}<br>
+                                                    {{ order.shipping_city }}, {{ order.shipping_country }}
+                                                    {% if order.shipping_postal_code %}{{ order.shipping_postal_code }}{% endif %}
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if orders.pages > 1 %}
+                        <div class="card-footer">
+                            <nav aria-label="Orders pagination">
+                                <ul class="pagination justify-content-center mb-0">
+                                    {% if orders.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('auth.orders', page=orders.prev_num) }}">
+                                                <i class="fas fa-chevron-left"></i> Previous
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for page_num in orders.iter_pages() %}
+                                        {% if page_num %}
+                                            {% if page_num != orders.page %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ url_for('auth.orders', page=page_num) }}">{{ page_num }}</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ page_num }}</span>
+                                                </li>
+                                            {% endif %}
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if orders.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('auth.orders', page=orders.next_num) }}">
+                                                Next <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                            <h4>No Orders Yet</h4>
+                            <p class="text-muted mb-4">You haven't placed any orders yet. Start shopping to see your orders here!</p>
+                            <a href="{{ url_for('main.products') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-shopping-cart me-2"></i>Start Shopping
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-collapse order details after 10 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const collapseElements = document.querySelectorAll('.collapse');
+        collapseElements.forEach(function(element) {
+            element.addEventListener('shown.bs.collapse', function() {
+                setTimeout(function() {
+                    if (element.classList.contains('show')) {
+                        bootstrap.Collapse.getInstance(element).hide();
+                    }
+                }, 10000); // 10 seconds
+            });
+        });
+    });
+</script>
+{% endblock %}

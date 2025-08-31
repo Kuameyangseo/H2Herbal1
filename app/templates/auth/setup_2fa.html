@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-center py-4">
+                    <h3 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Setup Two-Factor Authentication</h3>
+                    <p class="text-muted mb-0">Secure your account with 2FA</p>
+                </div>
+                <div class="card-body p-5">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Step 1:</strong> Install an authenticator app like Google Authenticator, Authy, or Microsoft Authenticator on your phone.
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Step 2:</strong> Scan the QR code below with your authenticator app.
+                    </div>
+                    
+                    {% if qr_code %}
+                    <div class="text-center mb-4">
+                        <div class="qr-code-container">
+                            <img src="data:image/png;base64,{{ qr_code }}" alt="2FA QR Code" class="img-fluid">
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-key me-2"></i>
+                        <strong>Manual Entry:</strong> If you can't scan the QR code, enter this secret key manually:
+                        <div class="mt-2">
+                            <code class="user-select-all">{{ secret }}</code>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ secret }}')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Step 3:</strong> After adding the account to your authenticator app, click "Continue" to verify the setup.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('auth.verify_2fa') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-arrow-right me-2"></i>Continue to Verification
+                        </a>
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel Setup
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .qr-code-container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        display: inline-block;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    code {
+        background: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        letter-spacing: 1px;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            // Show success feedback
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            btn.classList.remove('btn-outline-secondary');
+            btn.classList.add('btn-success');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-secondary');
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy to clipboard. Please copy manually.');
+        });
+    }
+</script>
+{% endblock %}

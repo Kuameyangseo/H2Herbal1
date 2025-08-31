@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item active">Contact Us</li>
+                </ol>
+            </nav>
+            <div class="text-center">
+                <h1 class="display-5 fw-bold text-success mb-3">Contact Us</h1>
+                <p class="lead text-muted">We'd love to hear from you. Get in touch with our team.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contact Form -->
+        <div class="col-lg-8 mb-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-envelope me-2"></i>Send us a Message</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.name.label }}</label>
+                                {{ form.name(class="form-control") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.name.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.email.label }}</label>
+                                {{ form.email(class="form-control") }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.email.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">{{ form.subject.label }}</label>
+                                {{ form.subject(class="form-control") }}
+                                {% if form.subject.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.subject.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">{{ form.message.label }}</label>
+                                {{ form.message(class="form-control", rows="6") }}
+                                {% if form.message.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.message.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="d-grid">
+                                    {{ form.submit(class="btn btn-primary btn-lg") }}
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="col-lg-4">
+            <!-- Contact Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Get in Touch</h5>
+                </div>
+                <div class="card-body">
+                    <div class="contact-info">
+                        <div class="contact-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-map-marker-alt text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6 class="mb-1">Address</h6>
+                                    <p class="text-muted mb-0">
+                                        123 Health Street<br>
+                                        East Legon, Accra<br>
+                                        Ghana
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-phone text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6 class="mb-1">Phone</h6>
+                                    <p class="text-muted mb-0">
+                                        <a href="tel:+233123456789" class="text-decoration-none">+233 123 456 789</a><br>
+                                        <a href="tel:+233987654321" class="text-decoration-none">+233 987 654 321</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-envelope text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6 class="mb-1">Email</h6>
+                                    <p class="text-muted mb-0">
+                                        <a href="mailto:info@h2herbal.com" class="text-decoration-none">info@h2herbal.com</a><br>
+                                        <a href="mailto:support@h2herbal.com" class="text-decoration-none">support@h2herbal.com</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-clock text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6 class="mb-1">Business Hours</h6>
+                                    <p class="text-muted mb-0">
+                                        Monday - Friday: 8:00 AM - 6:00 PM<br>
+                                        Saturday: 9:00 AM - 4:00 PM<br>
+                                        Sunday: Closed
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Media -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-share-alt me-2"></i>Follow Us</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-around">
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-info btn-sm">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-danger btn-sm">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-success btn-sm">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Link -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-question-circle fa-2x text-success mb-3"></i>
+                    <h6>Frequently Asked Questions</h6>
+                    <p class="text-muted small mb-3">Find quick answers to common questions about our products and services.</p>
+                    <a href="#" class="btn btn-outline-success btn-sm">View FAQ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-map me-2"></i>Find Us</h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Placeholder for Google Maps -->
+                    <div class="map-placeholder bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-map-marked-alt fa-3x mb-3"></i>
+                            <h6>Interactive Map</h6>
+                            <p class="mb-0">Google Maps integration would be implemented here</p>
+                            <small>123 Health Street, East Legon, Accra, Ghana</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shipping-fast fa-2x text-success mb-3"></i>
+                    <h6>Fast Delivery</h6>
+                    <p class="text-muted small mb-0">We offer fast and reliable delivery across Ghana. Most orders are delivered within 3-5 business days.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-2x text-success mb-3"></i>
+                    <h6>Quality Guarantee</h6>
+                    <p class="text-muted small mb-0">All our products are tested for quality and purity. We stand behind every product we sell.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-headset fa-2x text-success mb-3"></i>
+                    <h6>24/7 Support</h6>
+                    <p class="text-muted small mb-0">Our customer support team is available around the clock to help with any questions or concerns.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form submission handling
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+            submitBtn.disabled = true;
+        }
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

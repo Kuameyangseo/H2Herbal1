@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.cart') }}">Cart</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.checkout') }}">Checkout</a></li>
+                    <li class="breadcrumb-item active">Payment</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-success mb-3">Complete Your Payment</h1>
+            <p class="lead text-muted">Secure payment processing for Order #{{ order.id }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Payment Methods -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Method</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Payment Method Selection -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="payment-method-card" data-method="card">
+                                <div class="card h-100 border-2 payment-option">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-credit-card fa-2x text-primary mb-2"></i>
+                                        <h6>Credit/Debit Card</h6>
+                                        <small class="text-muted">Visa, Mastercard, Verve</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="payment-method-card" data-method="mobile_money">
+                                <div class="card h-100 border-2 payment-option">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-mobile-alt fa-2x text-success mb-2"></i>
+                                        <h6>Mobile Money</h6>
+                                        <small class="text-muted">MTN, Vodafone, AirtelTigo</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="payment-method-card" data-method="bank_transfer">
+                                <div class="card h-100 border-2 payment-option">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-university fa-2x text-info mb-2"></i>
+                                        <h6>Bank Transfer</h6>
+                                        <small class="text-muted">Direct bank transfer</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Payment Form -->
+                    <div id="card-payment" class="payment-form" style="display: none;">
+                        <h6 class="mb-3">Card Details</h6>
+                        <form id="card-form">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Card Number</label>
+                                    <input type="text" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Expiry Date</label>
+                                    <input type="text" class="form-control" placeholder="MM/YY" maxlength="5">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">CVV</label>
+                                    <input type="text" class="form-control" placeholder="123" maxlength="4">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Cardholder Name</label>
+                                    <input type="text" class="form-control" placeholder="John Doe">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Mobile Money Payment Form -->
+                    <div id="mobile-money-payment" class="payment-form" style="display: none;">
+                        <h6 class="mb-3">Mobile Money Details</h6>
+                        <form id="mobile-money-form">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Network Provider</label>
+                                    <select class="form-select">
+                                        <option value="">Select Network</option>
+                                        <option value="mtn">MTN Mobile Money</option>
+                                        <option value="vodafone">Vodafone Cash</option>
+                                        <option value="airteltigo">AirtelTigo Money</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" placeholder="0XX XXX XXXX">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bank Transfer Payment Form -->
+                    <div id="bank-transfer-payment" class="payment-form" style="display: none;">
+                        <h6 class="mb-3">Bank Transfer Instructions</h6>
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Bank Transfer Details</h6>
+                            <p class="mb-2"><strong>Account Name:</strong> H2HERBAL LIMITED</p>
+                            <p class="mb-2"><strong>Account Number:</strong> 1234567890</p>
+                            <p class="mb-2"><strong>Bank:</strong> Ghana Commercial Bank</p>
+                            <p class="mb-2"><strong>Branch:</strong> Accra Main Branch</p>
+                            <p class="mb-0"><strong>Reference:</strong> Order #{{ order.id }}</p>
+                        </div>
+                        <p class="text-muted small">Please use the order number as your transfer reference and upload proof of payment.</p>
+                        <div class="mb-3">
+                            <label class="form-label">Upload Proof of Payment</label>
+                            <input type="file" class="form-control" accept="image/*,.pdf">
+                        </div>
+                    </div>
+
+                    <!-- Payment Button -->
+                    <div class="d-grid mt-4">
+                        <button type="button" class="btn btn-success btn-lg" id="pay-now-btn" disabled>
+                            <i class="fas fa-lock me-2"></i>Pay GH₵{{ "%.2f"|format(order.total_amount) }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Order Items -->
+                    <div class="order-items mb-3">
+                        {% for item in order.items %}
+                        <div class="d-flex align-items-center mb-3">
+                            {% set payment_image = item.product.get_main_image() %}
+                            {% if payment_image.startswith('http') %}
+                                <img src="{{ payment_image }}"
+                                     class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;"
+                                     onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=50&h=50&fit=crop'">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='uploads/' + payment_image) }}"
+                                     class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;"
+                                     onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&w=50&h=50&fit=crop'">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 small">{{ item.product.name }}</h6>
+                                <small class="text-muted">Qty: {{ item.quantity }} × GH₵{{ "%.2f"|format(item.unit_price) }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold">GH₵{{ "%.2f"|format(item.total_price) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr>
+
+                    <!-- Order Totals -->
+                    <div class="order-totals">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>GH₵{{ "%.2f"|format(order.total_amount - order.shipping_cost) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping:</span>
+                            <span>GH₵{{ "%.2f"|format(order.shipping_cost) }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold fs-5">
+                            <span>Total:</span>
+                            <span class="text-success">GH₵{{ "%.2f"|format(order.total_amount) }}</span>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Shipping Address -->
+                    <div class="shipping-address">
+                        <h6><i class="fas fa-shipping-fast me-2"></i>Shipping Address</h6>
+                        <address class="small text-muted">
+                            {{ order.shipping_address }}<br>
+                            {{ order.shipping_city }}{% if order.shipping_postal_code %}, {{ order.shipping_postal_code }}{% endif %}<br>
+                            {{ order.shipping_country }}
+                        </address>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                    <h6>Secure Payment</h6>
+                    <p class="small text-muted mb-0">Your payment information is encrypted and secure. We never store your card details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .payment-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-color: #dee2e6 !important;
+    }
+
+    .payment-option:hover {
+        border-color: var(--primary-green) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(45, 80, 22, 0.1);
+    }
+
+    .payment-option.active {
+        border-color: var(--primary-green) !important;
+        background-color: rgba(45, 80, 22, 0.05);
+    }
+
+    .payment-form {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Payment method selection
+    document.querySelectorAll('.payment-method-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const method = this.dataset.method;
+            
+            // Remove active class from all cards
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            
+            // Add active class to selected card
+            this.querySelector('.payment-option').classList.add('active');
+            
+            // Hide all payment forms
+            document.querySelectorAll('.payment-form').forEach(form => {
+                form.style.display = 'none';
+            });
+            
+            // Show selected payment form
+            const formId = method.replace('_', '-') + '-payment';
+            const selectedForm = document.getElementById(formId);
+            if (selectedForm) {
+                selectedForm.style.display = 'block';
+            }
+            
+            // Enable pay button
+            document.getElementById('pay-now-btn').disabled = false;
+        });
+    });
+
+    // Pay now button
+    document.getElementById('pay-now-btn').addEventListener('click', function() {
+        const activeMethod = document.querySelector('.payment-option.active');
+        if (!activeMethod) {
+            alert('Please select a payment method');
+            return;
+        }
+
+        const method = activeMethod.closest('.payment-method-card').dataset.method;
+        
+        // Show loading state
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        this.disabled = true;
+
+        // Process payment based on method
+        if (method === 'card') {
+            processCardPayment();
+        } else if (method === 'mobile_money') {
+            processMobileMoneyPayment();
+        } else if (method === 'bank_transfer') {
+            processBankTransferPayment();
+        }
+    });
+
+    function processCardPayment() {
+        // Initialize Paystack payment for card
+        fetch('/process_payment/{{ order.id }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: 'payment_method=card'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to Paystack payment page
+                window.location.href = data.authorization_url;
+            } else {
+                alert('Payment initialization failed: ' + data.message);
+                resetPayButton();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Payment processing error. Please try again.');
+            resetPayButton();
+        });
+    }
+
+    function processMobileMoneyPayment() {
+        const networkSelect = document.querySelector('#mobile-money-payment select');
+        const phoneInput = document.querySelector('#mobile-money-payment input[type="tel"]');
+        
+        const network = networkSelect.value;
+        const phone = phoneInput.value;
+        
+        if (!network || !phone) {
+            alert('Please select your network and enter your phone number');
+            resetPayButton();
+            return;
+        }
+
+        // Initialize Paystack mobile money payment
+        fetch('/process_payment/{{ order.id }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: `payment_method=momo&phone_number=${encodeURIComponent(phone)}&network=${encodeURIComponent(network)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to Paystack payment page
+                window.location.href = data.authorization_url;
+            } else {
+                alert('Mobile money payment initialization failed: ' + data.message);
+                resetPayButton();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Mobile money payment error. Please try again.');
+            resetPayButton();
+        });
+    }
+
+    function processBankTransferPayment() {
+        // For bank transfer, redirect to success page with pending status
+        alert('Bank transfer instructions have been sent to your email. Your order will be processed once payment is confirmed.');
+        window.location.href = '/order-success/{{ order.id }}';
+    }
+
+    function resetPayButton() {
+        const payButton = document.getElementById('pay-now-btn');
+        payButton.innerHTML = '<i class="fas fa-lock me-2"></i>Pay GH₵{{ "%.2f"|format(order.total_amount) }}';
+        payButton.disabled = false;
+    }
+
+    // Card number formatting
+    document.querySelector('#card-payment input[placeholder="1234 5678 9012 3456"]')?.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        if (formattedValue.length > 19) formattedValue = formattedValue.substr(0, 19);
+        e.target.value = formattedValue;
+    });
+
+    // Expiry date formatting
+    document.querySelector('#card-payment input[placeholder="MM/YY"]')?.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+    });
+</script>
+{% endblock %}

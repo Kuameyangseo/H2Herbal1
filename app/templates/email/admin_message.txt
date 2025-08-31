@@ -1,0 +1,10 @@
+Dear {{ user.first_name }},
+
+{{ admin_user.first_name }} {{ admin_user.last_name }} (Administrator) has sent you a message:
+
+{{ message }}
+
+If you have any questions or need assistance, please don't hesitate to contact us.
+
+Best regards,
+The H2HERBAL Team

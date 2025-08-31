@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+      <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}" href="{{ url_for('admin.dashboard') }}">
+              <i class="fas fa-tachometer-alt me-2"></i>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.products' else '' }}" href="{{ url_for('admin.products') }}">
+              <i class="fas fa-box me-2"></i>
+              Products
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.categories' else '' }}" href="{{ url_for('admin.categories') }}">
+              <i class="fas fa-tags me-2"></i>
+              Categories
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.orders' else '' }}" href="{{ url_for('admin.orders') }}">
+              <i class="fas fa-shopping-cart me-2"></i>
+              Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.users' else '' }}" href="{{ url_for('admin.users') }}">
+              <i class="fas fa-users me-2"></i>
+              Users
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.reviews' else '' }}" href="{{ url_for('admin.reviews') }}">
+              <i class="fas fa-star me-2"></i>
+              Reviews
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.newsletter' else '' }}" href="{{ url_for('admin.newsletter') }}">
+              <i class="fas fa-envelope me-2"></i>
+              Newsletter
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.analytics' else '' }}" href="{{ url_for('admin.analytics') }}">
+              <i class="fas fa-chart-bar me-2"></i>
+              Analytics
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'messenger.admin_dashboard' else '' }}" href="{{ url_for('messenger.admin_dashboard') }}">
+              <i class="fas fa-comments me-2"></i>
+              Messages
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      {% block admin_content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<style>
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 80px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  }
+
+  .sidebar-sticky {
+    position: relative;
+    top: 0;
+    height: calc(100vh - 48px);
+    padding-top: .5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .sidebar .nav-link:hover {
+    color: #2d5016;
+  }
+
+  .sidebar .nav-link.active {
+    color: #2d5016;
+    background-color: rgba(45, 80, 22, 0.1);
+  }
+
+  .sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+  }
+</style>
+{% endblock %}

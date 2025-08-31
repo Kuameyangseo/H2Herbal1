@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 fw-bold text-success mb-3">
+                <i class="fas fa-chart-bar me-2"></i>Analytics & Reports
+            </h1>
+            <p class="lead text-muted">Business performance insights</p>
+        </div>
+    </div>
+
+    <!-- Sales Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Sales Overview (Last 30 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Selling Products</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if top_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.total_sold }}</td>
+                                    <td>GH₵{{ "%.2f"|format(product.total_revenue) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-box fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No sales data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Reports -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-export me-2"></i>Export Reports</h5>
+                </div>
+                <div class="card-body">
+                    <p>Export your business data in various formats:</p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" disabled>
+                            <i class="fas fa-file-csv me-1"></i>Export Sales Data (CSV)
+                        </button>
+                        <button class="btn btn-outline-success" disabled>
+                            <i class="fas fa-file-excel me-1"></i>Export Product Inventory (Excel)
+                        </button>
+                        <button class="btn btn-outline-info" disabled>
+                            <i class="fas fa-file-pdf me-1"></i>Export Customer List (PDF)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Date Range Report</h5>
+                </div>
+                <div class="card-body">
+                    <p>Generate custom reports for specific periods:</p>
+                    <form>
+                        <div class="mb-3">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary" disabled>
+                                <i class="fas fa-chart-pie me-1"></i>Generate Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sales chart data
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // Sample data - in a real application, this would come from the server
+        var dates = [];
+        var sales = [];
+        var orders = [];
+        
+        // Generate sample data for the last 30 days
+        var today = new Date();
+        for (var i = 29; i >= 0; i--) {
+            var date = new Date();
+            date.setDate(today.getDate() - i);
+            dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            sales.push(Math.floor(Math.random() * 5000) + 1000);
+            orders.push(Math.floor(Math.random() * 50) + 10);
+        }
+        
+        var salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Sales (GH₵)',
+                    data: sales,
+                    borderColor: '#2d5016',
+                    backgroundColor: 'rgba(45, 80, 22, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Orders',
+                    data: orders,
+                    borderColor: '#4a7c59',
+                    backgroundColor: 'rgba(74, 124, 89, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Sales (GH₵)'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Orders'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

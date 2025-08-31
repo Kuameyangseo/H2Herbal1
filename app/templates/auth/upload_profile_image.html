@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-camera me-2"></i>Upload Profile Image
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <!-- Current Profile Image -->
+                        <div class="position-relative d-inline-block">
+                            {% if current_user.profile_image and current_user.profile_image.startswith('http') %}
+                                <img src="{{ current_user.profile_image }}" 
+                                     class="rounded-circle mb-3" 
+                                     style="width: 120px; height: 120px; object-fit: cover;"
+                                     id="currentImage">
+                            {% elif current_user.profile_image and current_user.profile_image != 'default.jpg' %}
+                                <img src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}" 
+                                     class="rounded-circle mb-3" 
+                                     style="width: 120px; height: 120px; object-fit: cover;"
+                                     id="currentImage">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mb-3" 
+                                     style="width: 120px; height: 120px;" id="currentImage">
+                                    <i class="fas fa-user fa-3x text-white"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted">Current profile image</p>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">{{ form.profile_image.label }}</label>
+                            <div class="input-group">
+                                {{ form.profile_image(class="form-control", accept="image/*", id="imageInput") }}
+                                <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('imageInput').click()">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                            {% if form.profile_image.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.profile_image.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Supported formats: JPG, JPEG, PNG, GIF. Max size: 5MB
+                            </div>
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div class="mb-4 text-center" id="imagePreview" style="display: none;">
+                            <p class="text-muted mb-2">Preview:</p>
+                            <img id="previewImg" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg", id="uploadBtn") }}
+                            
+                            {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
+                                <form method="POST" action="{{ url_for('auth.remove_profile_image') }}" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger w-100" 
+                                            onclick="return confirm('Are you sure you want to remove your profile image?')">
+                                        <i class="fas fa-trash me-2"></i>Remove Current Image
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Image preview functionality
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const uploadBtn = document.getElementById('uploadBtn');
+        
+        if (file) {
+            // Check file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                e.target.value = '';
+                preview.style.display = 'none';
+                return;
+            }
+            
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                e.target.value = '';
+                preview.style.display = 'none';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload New Image';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Select an image first';
+        }
+    });
+    
+    // Initially disable upload button
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadBtn').textContent = 'Select an image first';
+    
+    // Form submission handling
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const uploadBtn = document.getElementById('uploadBtn');
+        if (!uploadBtn.disabled) {
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+            uploadBtn.disabled = true;
+        }
+    });
+</script>
+{% endblock %}

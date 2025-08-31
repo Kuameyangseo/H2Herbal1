@@ -1,0 +1,255 @@
+/* Admin Dashboard Styles */
+
+/* Chat Sessions List */
+.chat-session-item {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.chat-session-item:hover {
+  background-color: #f8f9fa;
+}
+
+.chat-session-item.active {
+  background-color: #e3f2fd;
+  border-left-color: #2d5016;
+}
+
+.chat-session-item.unassigned {
+  border-left-color: #ffc107;
+}
+
+.chat-session-item.high-priority {
+  border-left-color: #dc3545;
+}
+
+.session-customer-name {
+  font-weight: 500;
+}
+
+.session-last-message {
+  font-size: 0.85rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-time {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.session-unread-badge {
+  background-color: #2d5016;
+  color: white;
+  font-size: 0.7rem;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+/* Messages Container */
+.message {
+  max-width: 80%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  margin-bottom: 15px;
+  position: relative;
+  animation: fadeIn 0.2s ease;
+}
+
+.message.customer {
+  background-color: #f1f1f1;
+  border-bottom-left-radius: 5px;
+  margin-right: auto;
+}
+
+.message.agent {
+  background-color: #e3f2fd;
+  border-bottom-right-radius: 5px;
+  margin-left: auto;
+}
+
+.message.system {
+  background-color: #e9ecef;
+  color: #6c757d;
+  text-align: center;
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.message-content {
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+.message-time {
+  font-size: 0.7rem;
+  color: #999;
+  text-align: right;
+  margin-top: 5px;
+}
+
+.message-attachment {
+  margin-top: 8px;
+  display: block;
+}
+
+.message-attachment img {
+  max-width: 200px;
+  border-radius: 5px;
+}
+
+/* Typing Indicator */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+}
+
+.typing-dots .dot {
+  width: 8px;
+  height: 8px;
+  background-color: #6c757d;
+  border-radius: 50%;
+  margin: 0 2px;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots .dot:nth-child(1) { animation-delay: 0s; }
+.typing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}
+
+/* Customer Context Panel */
+.customer-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.customer-info-label {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.customer-info-value {
+  text-align: right;
+}
+
+.order-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-number {
+  font-weight: 500;
+}
+
+.order-status {
+  font-size: 0.85rem;
+}
+
+/* Agent Status */
+.agent-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+}
+
+.agent-status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.agent-status-indicator.online {
+  background-color: #28a745;
+}
+
+.agent-status-indicator.offline {
+  background-color: #6c757d;
+}
+
+.agent-status-indicator.busy {
+  background-color: #ffc107;
+}
+
+.agent-name {
+  flex-grow: 1;
+}
+
+.agent-stats {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .message {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-session-item .d-flex {
+    flex-direction: column;
+  }
+  
+  .session-meta {
+    margin-top: 5px;
+  }
+  
+  .session-time {
+    text-align: left;
+  }
+}
+
+/* Loading Screen Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2d5016;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
