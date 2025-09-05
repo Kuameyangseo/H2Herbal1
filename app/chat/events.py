@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, current_app
 from flask_login import current_user
 from app import socketio, db
 from app.models import ChatSession, ChatMessage, User
@@ -10,6 +10,15 @@ from flask_socketio import join_room, leave_room
 def handle_connect():
     """Handle client connection"""
     print(f'Client connected: {request.sid}')
+    # If this socket belongs to an authenticated admin user, add them to the
+    # global admins room so server-side emits to room='admins' reach them.
+    try:
+        if current_user.is_authenticated and getattr(current_user, 'is_admin', False):
+            join_room('admins')
+            current_app.logger.info(f"Socket {request.sid} joined admins room for user {current_user.id}")
+    except Exception:
+        # Don't break connection handling if anything goes wrong here
+        current_app.logger.exception('Failed to auto-join admin to admins room on connect')
 
 
 @socketio.on('disconnect')
