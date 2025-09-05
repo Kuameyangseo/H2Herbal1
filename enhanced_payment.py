@@ -12,6 +12,17 @@ from functools import wraps
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+try:
+    import eventlet  # type: ignore
+    def _maybe_sleep(t: float):
+        # yield control when running under eventlet to avoid blocking
+        eventlet.sleep(t)
+except Exception:
+    def _maybe_sleep(t: float):
+        # don't block the main thread in production; retries should be fast
+        return
+
+
 def retry_on_failure(max_retries=3, delay=1, backoff=2):
     """Decorator to retry API calls on failure"""
     def decorator(func):
@@ -27,16 +38,16 @@ def retry_on_failure(max_retries=3, delay=1, backoff=2):
                             retries += 1
                             if retries < max_retries:
                                 wait_time = delay * (backoff ** (retries - 1))
-                                logger.warning(f"API call failed with 401, retrying in {wait_time}s (attempt {retries}/{max_retries})")
-                                time.sleep(wait_time)
+                                logger.warning(f"API call failed with 401, retrying (attempt {retries}/{max_retries})")
+                                _maybe_sleep(wait_time)
                                 continue
                     return result
                 except Exception as e:
                     retries += 1
                     if retries < max_retries:
                         wait_time = delay * (backoff ** (retries - 1))
-                        logger.warning(f"API call exception: {e}, retrying in {wait_time}s (attempt {retries}/{max_retries})")
-                        time.sleep(wait_time)
+                        logger.warning(f"API call exception: {e}, retrying (attempt {retries}/{max_retries})")
+                        _maybe_sleep(wait_time)
                     else:
                         logger.error(f"API call failed after {max_retries} attempts: {e}")
                         raise
@@ -122,11 +133,9 @@ class EnhancedPaystackPayment:
     
     def _make_request(self, method, url, **kwargs):
         """Make HTTP request with enhanced error handling"""
-        # Add delay to avoid rate limiting
-        time.sleep(0.5)
-        
+        # Avoid blocking sleeps here; rely on session retry adapter and short timeouts.
         try:
-            response = self.session.request(method, url, timeout=30, **kwargs)
+            response = self.session.request(method, url, timeout=10, **kwargs)
             
             # Log the request for debugging
             logger.debug(f"{method} {url} - Status: {response.status_code}")
