@@ -70,9 +70,15 @@ def register():
             last_name=form.last_name.data
         )
         user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.exception(f"User registration failed: {str(e)}")
+            flash('Registration failed due to a server error. Please try again or contact support.', 'danger')
+            return render_template('auth/register.html', title='Register', form=form)
+
         flash('Congratulations, you are now registered!', 'success')
         return redirect(url_for('auth.login'))
     
