@@ -4,6 +4,43 @@ from app import socketio, db
 from app.models import ChatSession, ChatMessage, User
 from datetime import datetime
 from flask_socketio import join_room, leave_room
+from sqlalchemy.exc import SQLAlchemyError
+
+
+def _persist_message_and_emit(app, message_kwargs, rooms):
+    """Background task: persist a ChatMessage and emit to the given rooms.
+
+    This runs inside a separate greenlet and pushes an application context so
+    the DB session and `current_app` are available safely.
+    """
+    try:
+        with app.app_context():
+            message = ChatMessage(**message_kwargs)
+            db.session.add(message)
+            db.session.commit()
+
+            message_data = {
+                'id': message.id,
+                'session_id': message.session_id,
+                'sender_id': message.sender_id,
+                'sender_name': getattr(message, 'sender_name', None) or 'Customer',
+                'sender_type': 'agent' if message.sender_id and getattr(message, 'sender_is_admin', False) else 'customer',
+                'message': message.message,
+                'message_type': message.message_type,
+                'attachment_url': message.attachment_url,
+                'is_read': message.is_read,
+                'created_at': message.created_at.isoformat() if message.created_at else None
+            }
+
+            for room in rooms:
+                try:
+                    socketio.emit('message_sent', message_data, room=room)
+                except Exception:
+                    current_app.logger.exception('Failed to emit message_sent in background')
+    except SQLAlchemyError:
+        current_app.logger.exception('DB error while persisting chat message in background')
+    except Exception:
+        current_app.logger.exception('Unexpected error in _persist_message_and_emit')
 
 
 @socketio.on('connect')
@@ -59,36 +96,46 @@ def handle_join_session(data):
 
         # If session does not exist, create it and ensure the client joins the correct room using the created id
         if not session:
-            session = ChatSession(
-                customer_id=(current_user.id if current_user.is_authenticated and not current_user.is_admin else None),
-                subject='Customer Support',
-                priority='normal',
-                status='waiting'
-            )
-            db.session.add(session)
-            db.session.commit()
+            # Create session in background to avoid blocking the socket mainloop.
+            def _create_session_bg(app, sid, cust_id, cust_name):
+                try:
+                    with app.app_context():
+                        s = ChatSession(
+                            customer_id=cust_id,
+                            subject='Customer Support',
+                            priority='normal',
+                            status='waiting'
+                        )
+                        db.session.add(s)
+                        db.session.commit()
 
-            # Re-join the room for the created session id
+                        # ensure correct rooms are used after creation
+                        try:
+                            leave_room(f'session_{sid}')
+                        except Exception:
+                            pass
+                        join_room(f'session_{s.id}')
+
+                        socketio.emit('new_chat_session', {
+                            'session_id': s.id,
+                            'customer_name': cust_name,
+                            'message_preview': 'New chat session started'
+                        }, room='admins')
+
+                        socketio.emit('message_sent', {
+                            'session_id': s.id,
+                            'message': 'Chat session started',
+                            'sender_type': 'system',
+                            'created_at': s.created_at.isoformat() if s.created_at else None
+                        }, room=f'session_{s.id}')
+                except Exception:
+                    current_app.logger.exception('Failed to create chat session in background')
+
+            # Launch background task to create session and emit notifications
             try:
-                leave_room(f'session_{session_id}')
+                socketio.start_background_task(_create_session_bg, current_app._get_current_object(), session_id, (current_user.id if current_user.is_authenticated and not current_user.is_admin else None), customer_name)
             except Exception:
-                pass
-            join_room(f'session_{session.id}')
-
-            # Emit event to admins about new session
-            socketio.emit('new_chat_session', {
-                'session_id': session.id,
-                'customer_name': customer_name,
-                'message_preview': 'New chat session started'
-            }, room='admins')
-
-            # Emit system message to the correct session room so customer sees session start
-            socketio.emit('message_sent', {
-                'session_id': session.id,
-                'message': 'Chat session started',
-                'sender_type': 'system',
-                'created_at': session.created_at.isoformat() if session.created_at else None
-            }, room=f'session_{session.id}')
+                current_app.logger.exception('Failed to start background task for creating session')
 
         # If an admin joined an existing session, notify the session participants (unless silent)
         elif current_user.is_authenticated and current_user.is_admin:
@@ -147,49 +194,34 @@ def handle_send_message(data):
                 # Do not allow unassigned admins to send messages via socket
                 return
 
-        # Create message in database
-        message = ChatMessage(
+        # Persist message in background to avoid blocking the socket loop.
+        message_kwargs = dict(
             session_id=session_id,
             sender_id=current_user.id if current_user.is_authenticated else None,
             message=message_text,
             message_type='text'
         )
-        db.session.add(message)
-        db.session.commit()
-        
-        # Prepare message data for response
-        message_data = {
-            'id': message.id,
-            'session_id': message.session_id,
-            'sender_id': message.sender_id,
-            'sender_name': f"{current_user.first_name} {current_user.last_name}" if current_user.is_authenticated else 'Customer',
-            'sender_type': 'agent' if current_user.is_authenticated and current_user.is_admin else 'customer',
-            'message': message.message,
-            'message_type': message.message_type,
-            'attachment_url': message.attachment_url,
-            'is_read': message.is_read,
-            'created_at': message.created_at.isoformat() if message.created_at else None
-        }
-        
-        # Emit event to session room (this will reach both customer and admin)
-        socketio.emit('message_sent', message_data, room=f'session_{session_id}')
 
-        # Also emit message to admins so admin dashboards receive the first-message
-        # immediately and can create a lightweight session entry if needed.
         try:
-            socketio.emit('message_sent', message_data, room='admins')
+            socketio.start_background_task(
+                _persist_message_and_emit,
+                current_app._get_current_object(),
+                message_kwargs,
+                [f'session_{session_id}', 'admins']
+            )
         except Exception:
-            pass
-        
-        # Also emit to admins room for notifications
-        # Only send notification if this is a customer message (not admin messages to avoid loops)
-        # and only send a simple notification, not the full message content
+            current_app.logger.exception('Failed to start background task to persist message')
+
+        # Send admin notification quickly (non-blocking emit)
         if not (current_user.is_authenticated and current_user.is_admin):
-            socketio.emit('admin_notification', {
-                'title': 'New Message',
-                'message': f"New message from {message_data['sender_name']}",
-                'session_id': session_id
-            }, room='admins')
+            try:
+                socketio.emit('admin_notification', {
+                    'title': 'New Message',
+                    'message': f"New message from {current_user.first_name + ' ' + current_user.last_name if current_user.is_authenticated else 'Customer'}",
+                    'session_id': session_id
+                }, room='admins')
+            except Exception:
+                current_app.logger.exception('Failed to emit admin_notification')
 
 @socketio.on('typing')
 def handle_typing(data):
