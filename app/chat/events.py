@@ -13,8 +13,9 @@ def _persist_message_and_emit(app, message_kwargs, rooms):
     This runs inside a separate greenlet and pushes an application context so
     the DB session and `current_app` are available safely.
     """
-    try:
-        with app.app_context():
+    # Run everything inside the app context so `app.logger` and the DB are available
+    with app.app_context():
+        try:
             message = ChatMessage(**message_kwargs)
             db.session.add(message)
             db.session.commit()
@@ -36,11 +37,11 @@ def _persist_message_and_emit(app, message_kwargs, rooms):
                 try:
                     socketio.emit('message_sent', message_data, room=room)
                 except Exception:
-                    current_app.logger.exception('Failed to emit message_sent in background')
-    except SQLAlchemyError:
-        current_app.logger.exception('DB error while persisting chat message in background')
-    except Exception:
-        current_app.logger.exception('Unexpected error in _persist_message_and_emit')
+                    app.logger.exception('Failed to emit message_sent in background')
+        except SQLAlchemyError:
+            app.logger.exception('DB error while persisting chat message in background')
+        except Exception:
+            app.logger.exception('Unexpected error in _persist_message_and_emit')
 
 
 @socketio.on('connect')
@@ -98,8 +99,9 @@ def handle_join_session(data):
         if not session:
             # Create session in background to avoid blocking the socket mainloop.
             def _create_session_bg(app, sid, cust_id, cust_name):
-                try:
-                    with app.app_context():
+                # Ensure all work (and logging) happens inside the app context
+                with app.app_context():
+                    try:
                         s = ChatSession(
                             customer_id=cust_id,
                             subject='Customer Support',
@@ -111,10 +113,15 @@ def handle_join_session(data):
 
                         # ensure correct rooms are used after creation
                         try:
-                            leave_room(f'session_{sid}')
+                            # Specify the target sid when manipulating rooms from a background task
+                            leave_room(f'session_{sid}', sid=sid)
                         except Exception:
                             pass
-                        join_room(f'session_{s.id}')
+                        try:
+                            join_room(f'session_{s.id}', sid=sid)
+                        except Exception:
+                            # join may fail for transient reasons; continue
+                            app.logger.exception('Failed to join session room for sid in background')
 
                         socketio.emit('new_chat_session', {
                             'session_id': s.id,
@@ -128,12 +135,16 @@ def handle_join_session(data):
                             'sender_type': 'system',
                             'created_at': s.created_at.isoformat() if s.created_at else None
                         }, room=f'session_{s.id}')
-                except Exception:
-                    current_app.logger.exception('Failed to create chat session in background')
+                    except Exception:
+                        app.logger.exception('Failed to create chat session in background')
 
             # Launch background task to create session and emit notifications
             try:
-                socketio.start_background_task(_create_session_bg, current_app._get_current_object(), session_id, (current_user.id if current_user.is_authenticated and not current_user.is_admin else None), customer_name)
+                # Pass the real socket sid so the background task can move the client between rooms
+                try:
+                    socketio.start_background_task(_create_session_bg, current_app._get_current_object(), request.sid, (current_user.id if current_user.is_authenticated and not current_user.is_admin else None), customer_name)
+                except Exception:
+                    current_app.logger.exception('Failed to start background task for creating session')
             except Exception:
                 current_app.logger.exception('Failed to start background task for creating session')
 
