@@ -16,14 +16,24 @@ import json
 @bp.route('/')
 @bp.route('/index')
 def index():
-    # Get featured products
-    featured_products = Product.query.filter_by(is_featured=True, is_active=True).limit(8).all()
-    
-    # Get categories
-    categories = Category.query.filter_by(is_active=True).all()
-    
-    # Get latest products
-    latest_products = Product.query.filter_by(is_active=True).order_by(Product.created_at.desc()).limit(8).all()
+    # Use a small in-memory cache (per process) to avoid repeated DB queries for
+    # categories and featured/latest lists. TTL kept small so changes show up.
+    featured_products = current_app.cache_get('featured_products')
+    if featured_products is None:
+        featured_products = Product.query.filter_by(is_featured=True, is_active=True).limit(8).all()
+        current_app.cache_set('featured_products', featured_products, ttl=30)
+
+    # Get categories (cached)
+    categories = current_app.cache_get('active_categories')
+    if categories is None:
+        categories = Category.query.filter_by(is_active=True).all()
+        current_app.cache_set('active_categories', categories, ttl=60)
+
+    # Get latest products (cached briefly)
+    latest_products = current_app.cache_get('latest_products')
+    if latest_products is None:
+        latest_products = Product.query.filter_by(is_active=True).order_by(Product.created_at.desc()).limit(8).all()
+        current_app.cache_set('latest_products', latest_products, ttl=30)
     
     # Newsletter form
     newsletter_form = NewsletterForm()
@@ -162,6 +172,14 @@ def add_to_cart(product_id):
         
         db.session.commit()
         flash(f'{product.name} added to cart!', 'success')
+        # Clear cached cart values for templates
+        try:
+            if hasattr(current_user, '_cached_cart_count'):
+                delattr(current_user, '_cached_cart_count')
+            if hasattr(current_user, '_cached_cart_total'):
+                delattr(current_user, '_cached_cart_total')
+        except Exception:
+            pass
     
     return redirect(url_for('main.product_detail', id=product_id))
 
@@ -201,6 +219,14 @@ def update_cart(item_id):
             flash('Cart updated', 'success')
         
         db.session.commit()
+        # Clear cached cart values for templates
+        try:
+            if hasattr(current_user, '_cached_cart_count'):
+                delattr(current_user, '_cached_cart_count')
+            if hasattr(current_user, '_cached_cart_total'):
+                delattr(current_user, '_cached_cart_total')
+        except Exception:
+            pass
     
     return redirect(url_for('main.cart'))
 
@@ -216,7 +242,15 @@ def remove_from_cart(item_id):
     db.session.delete(cart_item)
     db.session.commit()
     flash('Item removed from cart', 'info')
-    
+    # Clear cached cart values for templates
+    try:
+        if hasattr(current_user, '_cached_cart_count'):
+            delattr(current_user, '_cached_cart_count')
+        if hasattr(current_user, '_cached_cart_total'):
+            delattr(current_user, '_cached_cart_total')
+    except Exception:
+        pass
+
     return redirect(url_for('main.cart'))
 
 @bp.route('/checkout', methods=['GET', 'POST'])
@@ -284,8 +318,16 @@ def checkout():
         # Clear cart
         for cart_item in cart_items:
             db.session.delete(cart_item)
-        
+
         db.session.commit()
+        # Clear cached cart values for templates
+        try:
+            if hasattr(current_user, '_cached_cart_count'):
+                delattr(current_user, '_cached_cart_count')
+            if hasattr(current_user, '_cached_cart_total'):
+                delattr(current_user, '_cached_cart_total')
+        except Exception:
+            pass
         
         # Process payment
         if form.payment_method.data in ['card', 'momo']:

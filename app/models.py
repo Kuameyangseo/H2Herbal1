@@ -144,14 +144,33 @@ class User(UserMixin, db.Model):
         return False, "SMS service unavailable"
     
     def get_cart_total(self):
+        # Cache the computed cart total on the instance to avoid repeated DB access
+        if hasattr(self, '_cached_cart_total'):
+            return self._cached_cart_total
+
         total = Decimal('0.00')
         for item in self.cart_items:
             item_total = Decimal(str(item.product.price)) * Decimal(str(item.quantity))
             total += item_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-        return float(total)
+        value = float(total)
+        try:
+            # store cached value for the life of this model instance (request)
+            self._cached_cart_total = value
+        except Exception:
+            pass
+        return value
     
     def get_cart_count(self):
-        return sum(item.quantity for item in self.cart_items)
+        # Cache the computed cart count on the instance to avoid repeated DB access
+        if hasattr(self, '_cached_cart_count'):
+            return self._cached_cart_count
+
+        count = sum(item.quantity for item in self.cart_items)
+        try:
+            self._cached_cart_count = count
+        except Exception:
+            pass
+        return count
     
     def generate_2fa_secret(self):
         """Generate a new 2FA secret key"""

@@ -131,6 +131,33 @@ def create_app():
             'Set REDIS_URL to a Redis instance and restart, or run with a single worker.' % workers
         )
     csrf.init_app(app)
+
+    # Lightweight in-memory cache (per-process). Use only for small, non-critical
+    # values (categories, featured products). TTL in seconds.
+    app._local_cache = {
+        'data': {},
+        'ttl': {}
+    }
+
+    def cache_set(key, value, ttl=60):
+        import time
+        app._local_cache['data'][key] = value
+        app._local_cache['ttl'][key] = time.time() + ttl
+
+    def cache_get(key):
+        import time
+        exp = app._local_cache['ttl'].get(key)
+        if not exp:
+            return None
+        if time.time() > exp:
+            # expired
+            app._local_cache['data'].pop(key, None)
+            app._local_cache['ttl'].pop(key, None)
+            return None
+        return app._local_cache['data'].get(key)
+
+    app.cache_set = cache_set
+    app.cache_get = cache_get
     
     # Make CSRF token available in templates
     @app.context_processor
@@ -171,6 +198,10 @@ def create_app():
     # Create upload directory if it doesn't exist
     upload_dir = os.path.join(app.instance_path, '..', app.config['UPLOAD_FOLDER'])
     os.makedirs(upload_dir, exist_ok=True)
+
+    # Prefer longer cache lifetime for static files in production
+    if not app.config.get('DEBUG'):
+        app.send_file_max_age_default = 31536000  # 1 year for static assets
 
     # Error handler for requests that exceed MAX_CONTENT_LENGTH
     try:
