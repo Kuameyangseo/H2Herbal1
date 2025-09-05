@@ -44,6 +44,49 @@ def _persist_message_and_emit(app, message_kwargs, rooms):
             app.logger.exception('Unexpected error in _persist_message_and_emit')
 
 
+def create_chat_session(app, sid, cust_id, cust_name):
+    """Create a ChatSession and emit the related socket events.
+
+    This helper is callable synchronously (from tests) or as a background
+    task. It always pushes an app context before touching the DB or socketio.
+    """
+    with app.app_context():
+        try:
+            s = ChatSession(
+                customer_id=cust_id,
+                subject='Customer Support',
+                priority='normal',
+                status='waiting'
+            )
+            db.session.add(s)
+            db.session.commit()
+
+            # ensure correct rooms are used after creation
+            try:
+                leave_room(f'session_{sid}', sid=sid)
+            except Exception:
+                pass
+            try:
+                join_room(f'session_{s.id}', sid=sid)
+            except Exception:
+                app.logger.exception('Failed to join session room for sid in background')
+
+            socketio.emit('new_chat_session', {
+                'session_id': s.id,
+                'customer_name': cust_name,
+                'message_preview': 'New chat session started'
+            }, room='admins')
+
+            socketio.emit('message_sent', {
+                'session_id': s.id,
+                'message': 'Chat session started',
+                'sender_type': 'system',
+                'created_at': s.created_at.isoformat() if s.created_at else None
+            }, room=f'session_{s.id}')
+        except Exception:
+            app.logger.exception('Failed to create chat session')
+
+
 @socketio.on('connect')
 def handle_connect():
     """Handle client connection"""
@@ -97,54 +140,15 @@ def handle_join_session(data):
 
         # If session does not exist, create it and ensure the client joins the correct room using the created id
         if not session:
-            # Create session in background to avoid blocking the socket mainloop.
-            def _create_session_bg(app, sid, cust_id, cust_name):
-                # Ensure all work (and logging) happens inside the app context
-                with app.app_context():
-                    try:
-                        s = ChatSession(
-                            customer_id=cust_id,
-                            subject='Customer Support',
-                            priority='normal',
-                            status='waiting'
-                        )
-                        db.session.add(s)
-                        db.session.commit()
-
-                        # ensure correct rooms are used after creation
-                        try:
-                            # Specify the target sid when manipulating rooms from a background task
-                            leave_room(f'session_{sid}', sid=sid)
-                        except Exception:
-                            pass
-                        try:
-                            join_room(f'session_{s.id}', sid=sid)
-                        except Exception:
-                            # join may fail for transient reasons; continue
-                            app.logger.exception('Failed to join session room for sid in background')
-
-                        socketio.emit('new_chat_session', {
-                            'session_id': s.id,
-                            'customer_name': cust_name,
-                            'message_preview': 'New chat session started'
-                        }, room='admins')
-
-                        socketio.emit('message_sent', {
-                            'session_id': s.id,
-                            'message': 'Chat session started',
-                            'sender_type': 'system',
-                            'created_at': s.created_at.isoformat() if s.created_at else None
-                        }, room=f'session_{s.id}')
-                    except Exception:
-                        app.logger.exception('Failed to create chat session in background')
-
             # Launch background task to create session and emit notifications
             try:
-                # Pass the real socket sid so the background task can move the client between rooms
-                try:
-                    socketio.start_background_task(_create_session_bg, current_app._get_current_object(), request.sid, (current_user.id if current_user.is_authenticated and not current_user.is_admin else None), customer_name)
-                except Exception:
-                    current_app.logger.exception('Failed to start background task for creating session')
+                socketio.start_background_task(
+                    create_chat_session,
+                    current_app._get_current_object(),
+                    request.sid,
+                    (current_user.id if current_user.is_authenticated and not current_user.is_admin else None),
+                    customer_name
+                )
             except Exception:
                 current_app.logger.exception('Failed to start background task for creating session')
 
