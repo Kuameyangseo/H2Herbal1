@@ -1,1 +1,1 @@
-web: gunicorn -k eventlet -w 1 -b 0.0.0.0:$PORT wsgi:app --timeout 120 --graceful-timeout 30 -c gunicorn_config.py
+web: sh scripts/start_gunicorn.sh
