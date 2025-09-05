@@ -101,23 +101,35 @@ def create_app():
             async_mode = 'threading'
 
     # Initialize SocketIO with detected async mode and optional message queue.
+    # Slightly larger ping values reduce false-positive "Invalid session" events
+    # when reverse proxies or mobile clients introduce latency.
     socketio.init_app(
         app,
         cors_allowed_origins="*",
         async_mode=async_mode,
         message_queue=message_queue,
-    transports=['polling', 'websocket'],
-    # Enable engineio logging (INFO) to capture invalid session traces when debugging.
-    # Reduce sensitivity to transient network hiccups by increasing ping timeout and interval.
-    engineio_logger=True,
-    socketio_logger=False,
-    # These settings help keep the Engine.IO session alive during longer page loads or
-    # when reverse proxies introduce latency. Values are in seconds.
-    ping_interval=25,
-    ping_timeout=60,
+        transports=['polling', 'websocket'],
+        # Enable engineio logging (INFO) to capture invalid session traces when debugging.
+        engineio_logger=True,
+        socketio_logger=False,
+        # These settings help keep the Engine.IO session alive during longer page loads or
+        # when reverse proxies introduce latency. Values are in seconds.
+        ping_interval=int(os.environ.get('SOCKETIO_PING_INTERVAL', '25')),
+        ping_timeout=int(os.environ.get('SOCKETIO_PING_TIMEOUT', '90')),
     )
 
     app.logger.info(f"SocketIO async_mode={async_mode} message_queue={'set' if message_queue else 'none'}")
+    # Warn if multiple workers are configured without a message queue.
+    try:
+        workers = int(os.environ.get('GUNICORN_WORKERS', os.environ.get('WEB_CONCURRENCY', '1')))
+    except Exception:
+        workers = 1
+    if workers > 1 and not message_queue:
+        app.logger.warning(
+            'Multiple Gunicorn workers configured (workers=%d) but REDIS_URL is not set. '
+            'Socket.IO sessions will not be shared between workers and you will see "Invalid session" errors. '
+            'Set REDIS_URL to a Redis instance and restart, or run with a single worker.' % workers
+        )
     csrf.init_app(app)
     
     # Make CSRF token available in templates
