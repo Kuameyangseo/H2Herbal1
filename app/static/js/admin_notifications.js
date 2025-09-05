@@ -18,10 +18,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Socket.IO connection
     const socket = io();
 
-    // Listen for new message notifications
-    socket.on('new_message_notification', function(data) {
-        console.log('New message notification received:', data);
-        
+    // When connected, explicitly join the 'admins' room so server emits to
+    // room='admins' reach this client even if server-side auto-join fails.
+    socket.on('connect', function() {
+        try {
+            socket.emit('join_room', { room: 'admins' });
+            console.log('Admin socket connected and requested to join admins room');
+        } catch (e) {
+            console.error('Failed to join admins room on connect', e);
+        }
+    });
+
+    // Listen for admin_notification (server-side emits this for alerts)
+    socket.on('admin_notification', function(data) {
+        console.log('admin_notification received:', data);
+
         // Update notification badge
         const notificationBadge = document.getElementById('navNotificationBadge');
         if (notificationBadge) {
@@ -30,13 +41,29 @@ document.addEventListener('DOMContentLoaded', function() {
             notificationBadge.style.display = 'inline-block';
         }
 
-        // Show browser notification if supported
+        // Optionally show browser notification if supported
         if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('New Support Message', {
-                body: `From: ${data.sender_name}\nMessage: ${data.message.substring(0, 50)}...`,
+            const messageText = data.message ? (data.message.substring(0, 50) + (data.message.length > 50 ? '...' : '')) : '';
+            new Notification(data.title || 'Support Notification', {
+                body: messageText,
                 icon: '/static/images/notification-icon.png'
             });
         }
+    });
+
+    // Also listen for message_sent so admin dashboards can react to actual messages
+    socket.on('message_sent', function(data) {
+        console.log('message_sent received for admin:', data);
+
+        // Update notification badge as a lightweight notification
+        const notificationBadge = document.getElementById('navNotificationBadge');
+        if (notificationBadge) {
+            const currentCount = parseInt(notificationBadge.textContent) || 0;
+            notificationBadge.textContent = currentCount + 1;
+            notificationBadge.style.display = 'inline-block';
+        }
+
+        // You may add UI logic here to insert the message into the admin messages list
     });
 
     // Listen for chat session assigned notifications
