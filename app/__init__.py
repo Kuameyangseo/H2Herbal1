@@ -1,14 +1,7 @@
 import os
-# If eventlet is installed and intended as the async worker, monkey-patch
-# early so greenlets work correctly for networking. This must happen before
-# importing libraries that do network IO. It's safe to silently continue
-# if eventlet isn't available.
-try:
-    import eventlet  # type: ignore
-    eventlet.monkey_patch()
-except Exception:
-    # eventlet not installed or monkey-patch failed; continue without it
-    pass
+# Note: eventlet/gevent monkey-patching must be applied inside worker processes
+# (see `gunicorn_config.post_worker_init`) to avoid patching the Gunicorn
+# master/arbiter. Do NOT monkey-patch here at module import time.
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
