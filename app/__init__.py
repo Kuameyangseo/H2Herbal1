@@ -44,7 +44,12 @@ def create_app():
     
     # Upload Configuration
     app.config['UPLOAD_FOLDER'] = 'app/static/uploads'
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+    # Allow overriding the maximum upload size via environment (value in MB)
+    try:
+        max_mb = int(os.environ.get('MAX_CONTENT_LENGTH_MB', '16'))
+    except Exception:
+        max_mb = 16
+    app.config['MAX_CONTENT_LENGTH'] = max_mb * 1024 * 1024  # default 16MB max file size
     
     # SMS Configuration (Twilio)
     app.config['TWILIO_ACCOUNT_SID'] = os.environ.get('TWILIO_ACCOUNT_SID')
@@ -97,7 +102,31 @@ def create_app():
     # Create upload directory if it doesn't exist
     upload_dir = os.path.join(app.instance_path, '..', app.config['UPLOAD_FOLDER'])
     os.makedirs(upload_dir, exist_ok=True)
-    
+
+    # Error handler for requests that exceed MAX_CONTENT_LENGTH
+    try:
+        from werkzeug.exceptions import RequestEntityTooLarge
+
+        @app.errorhandler(RequestEntityTooLarge)
+        def handle_request_entity_too_large(error):
+            # Return a concise, non-crashing response for oversized requests
+            return ("Request body too large. Max allowed size is %d MB." % max_mb, 413)
+    except Exception:
+        # If werkzeug API differs, skip registering the handler; it's non-fatal
+        pass
+
+    # Handle oversized request bodies gracefully
+    try:
+        from werkzeug.exceptions import RequestEntityTooLarge
+
+        @app.errorhandler(RequestEntityTooLarge)
+        def handle_request_entity_too_large(error):
+            app.logger.warning('RequestEntityTooLarge: client tried to send too large a payload')
+            return ("Request payload too large. Maximum allowed is %d bytes." % app.config.get('MAX_CONTENT_LENGTH', 0)), 413
+    except Exception:
+        # If werkzeug doesn't expose RequestEntityTooLarge (very old Werkzeug), skip handler
+        pass
+
     return app
 
 @login_manager.user_loader
