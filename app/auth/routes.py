@@ -1,7 +1,12 @@
 from datetime import datetime, timezone
 from flask import app, render_template, redirect, url_for, flash, request, current_app, session, make_response
 from flask_login import login_user, logout_user, current_user, login_required
-from werkzeug.urls import url_parse
+try:
+    # Newer Werkzeug moved url_parse; prefer importing if available
+    from werkzeug.urls import url_parse
+except Exception:
+    # Fallback for environments without that attribute
+    from urllib.parse import urlparse as url_parse
 from app import db
 from app.auth import bp
 from app.auth.forms import (LoginForm, RegistrationForm, ResetPasswordRequestForm,
