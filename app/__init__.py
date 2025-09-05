@@ -19,6 +19,11 @@ from flask_socketio import SocketIO
 from flask_wtf.csrf import CSRFProtect
 from decimal import ROUND_HALF_UP
 import decimal
+try:
+    from flask_compress import Compress
+    _have_compress = True
+except Exception:
+    _have_compress = False
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -37,6 +42,13 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///h2herbal.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Production-ready engine options for non-SQLite databases (tweak via env vars)
+    if app.config['SQLALCHEMY_DATABASE_URI'] and not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:'):
+        app.config.setdefault('SQLALCHEMY_ENGINE_OPTIONS', {})
+        engine_opts = app.config['SQLALCHEMY_ENGINE_OPTIONS']
+        engine_opts.setdefault('pool_pre_ping', True)
+        engine_opts.setdefault('pool_size', int(os.environ.get('DB_POOL_SIZE', '5')))
+        engine_opts.setdefault('max_overflow', int(os.environ.get('DB_MAX_OVERFLOW', '10')))
     
     # Google OAuth Configuration
     app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
@@ -77,6 +89,9 @@ def create_app():
     login_manager.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
+    # Optional response compression to reduce response sizes and improve client latency
+    if _have_compress:
+        Compress().init_app(app)
     # Configure SocketIO async mode and optional message queue for production scaling.
     # Prefer eventlet -> gevent -> threading. If REDIS_URL is set, use it as message_queue.
     message_queue = os.environ.get('REDIS_URL')
