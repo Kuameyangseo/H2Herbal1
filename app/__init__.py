@@ -1,4 +1,15 @@
 import os
+# If eventlet is installed and intended as the async worker, monkey-patch
+# early so greenlets work correctly for networking. This must happen before
+# importing libraries that do network IO. It's safe to silently continue
+# if eventlet isn't available.
+try:
+    import eventlet  # type: ignore
+    eventlet.monkey_patch()
+except Exception:
+    # eventlet not installed or monkey-patch failed; continue without it
+    pass
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -87,9 +98,15 @@ def create_app():
         cors_allowed_origins="*",
         async_mode=async_mode,
         message_queue=message_queue,
-        transports=['polling', 'websocket'],
-        engineio_logger=False,
-        socketio_logger=False,
+    transports=['polling', 'websocket'],
+    # Enable engineio logging (INFO) to capture invalid session traces when debugging.
+    # Reduce sensitivity to transient network hiccups by increasing ping timeout and interval.
+    engineio_logger=True,
+    socketio_logger=False,
+    # These settings help keep the Engine.IO session alive during longer page loads or
+    # when reverse proxies introduce latency. Values are in seconds.
+    ping_interval=25,
+    ping_timeout=60,
     )
 
     app.logger.info(f"SocketIO async_mode={async_mode} message_queue={'set' if message_queue else 'none'}")
@@ -122,6 +139,12 @@ def create_app():
     
     from app.chat import bp as messenger_bp
     app.register_blueprint(messenger_bp, url_prefix='/messenger')
+
+    # Import chat socket event handlers so they are registered with SocketIO
+    try:
+        from app.chat import events  # noqa: F401
+    except Exception:
+        app.logger.exception('Failed to import chat socket event handlers')
     
     # Google OAuth is now handled directly in auth routes
     
