@@ -19,6 +19,8 @@ csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
+    # Ensure DEBUG is off by default in production unless explicitly enabled
+    app.config['DEBUG'] = str(os.environ.get('FLASK_DEBUG', '0')).lower() in ['1', 'true', 'on']
     
     # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
@@ -64,9 +66,33 @@ def create_app():
     login_manager.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading',
-                      transports=['polling', 'websocket'],
-                      engineio_logger=False, socketio_logger=False)
+    # Configure SocketIO async mode and optional message queue for production scaling.
+    # Prefer eventlet -> gevent -> threading. If REDIS_URL is set, use it as message_queue.
+    message_queue = os.environ.get('REDIS_URL')
+    async_mode = None
+    try:
+        # Prefer eventlet when installed (best for SocketIO)
+        import eventlet  # type: ignore
+        async_mode = 'eventlet'
+    except Exception:
+        try:
+            import gevent  # type: ignore
+            async_mode = 'gevent'
+        except Exception:
+            async_mode = 'threading'
+
+    # Initialize SocketIO with detected async mode and optional message queue.
+    socketio.init_app(
+        app,
+        cors_allowed_origins="*",
+        async_mode=async_mode,
+        message_queue=message_queue,
+        transports=['polling', 'websocket'],
+        engineio_logger=False,
+        socketio_logger=False,
+    )
+
+    app.logger.info(f"SocketIO async_mode={async_mode} message_queue={'set' if message_queue else 'none'}")
     csrf.init_app(app)
     
     # Make CSRF token available in templates
