@@ -1,0 +1,15 @@
+[Unit]
+Description=Gunicorn instance to serve H2Herbal
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/h2herbal
+Environment="PATH=/var/www/h2herbal/venv/bin"
+# Set production environment variables securely in your systemd drop-in or env file
+# Example: Environment=DATABASE_URL=postgres://user:pass@db:5432/h2herbal
+ExecStart=/var/www/h2herbal/venv/bin/gunicorn -k eventlet -w 4 -b 0.0.0.0:8000 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
